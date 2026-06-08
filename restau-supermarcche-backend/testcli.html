@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Écran Cuisine WebSocket</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Écran Cuisine (Simulateur Temps Réel)</h1>
+    <div id="statut" style="color: red;">Déconnecté</div>
+    <h2>Commandes reçues :</h2>
+    <ul id="liste-commandes"></ul>
+
+    <script>
+        // Connexion au serveur Node.js local
+        const socket = io("http://localhost:5000");
+
+        const statutDiv = document.getElementById("statut");
+        const liste = document.getElementById("liste-commandes");
+
+        socket.on("connect", () => {
+            statutDiv.textContent = "Connecté au serveur backend !";
+            statutDiv.style.color = "green";
+            
+            // Rejoindre la chambre cuisine dès la connexion
+            socket.emit("rejoindre_chambre", "cuisine");
+        });
+
+        // Écouter l'événement créé dans le contrôleur de commande
+        socket.on("nouvelle_commande_cuisine", (commande) => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>Commande ${commande._id.slice(-4)}</strong> - Table: ${commande.table} - Total: ${commande.montantTotal} F CFA`;
+            liste.appendChild(li);
+            console.log("Nouvelle commande reçue :", commande);
+        });
+
+        socket.on("disconnect", () => {
+            statutDiv.textContent = "Déconnecté du serveur.";
+            statutDiv.style.color = "red";
+        });
+    </script>
+</body>
+</html>
