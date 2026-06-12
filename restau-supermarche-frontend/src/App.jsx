@@ -2,9 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Connexion from './components/Connexion'; // Importation de notre nouvel écran
 import EcranCuisine from './components/EcranCuisine'; // 1. Ajoute cet import en haut
+import InterfaceClient from './components/InterfaceClient'; // 1. Importer le fichier
 
 const ClientMenu = () => <div style={{ padding: '20px' }}><h2>🛒 Menu Restaurant & Scan & Go</h2><p>Interface client pour commander et scanner</p></div>;
-const EcranCuisine = () => <div style={{ padding: '20px' }}><h2>🍳 Tableau de bord Cuisine</h2><p>Commandes temps réel Socket.io</p></div>;
 const VigilControle = () => <div style={{ padding: '20px' }}><h2>🛡️ Contrôle de Sortie Vigile</h2><p>Validation des QR Codes</p></div>;
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={<Connexion />} />
-          <Route path="/client" element={<ClientMenu />} />
+          <Route path="/client" element={<InterfaceClient />} />
           <Route path="/cuisine" element={<EcranCuisine />} />
           <Route path="/controle" element={<VigilControle />} />
         </Routes>

@@ -7,7 +7,8 @@ const connectDB = require('./config/db.js');
 const produitRoutes = require('./routes/produitRoutes.js');
 const commandeRoutes = require('./routes/commandeRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
-const paiementRoutes = require('./routes/paiementRoutes.js'); // 1. Importer
+const paiementRoutes = require('./routes/paiementRoutes.js'); //
+const gestionnaireErreurs = require('./middleware/errorMiddleware');
 
 dotenv.config();
 connectDB();
@@ -59,6 +60,7 @@ io.on('connection', (socket) => {
   });
 });
 
+app.use(gestionnaireErreurs);
 const PORT = process.env.PORT || 5000;
 // 3. IMPORTANT : On lance 'server.listen' et non plus 'app.listen'
 server.listen(PORT, () => {

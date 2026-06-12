@@ -17,7 +17,7 @@ const proteger = async (req, res, next) => {
       req.utilisateur = await Utilisateur.findById(decoded.id);
       
       next();
-    } catch (error) {
+    } catch (error) { 
       return res.status(401).json({ success: false, error: "Accès refusé, jeton invalide ou expiré" });
     }
   }

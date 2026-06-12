@@ -98,8 +98,55 @@ const modifierStatutCommande = async (req, res) => {
   }
 };
 
+// @desc    Mettre à jour le statut de préparation d'une commande (Cuisine) avec verrou de paiement
+// @route   PUT /api/commandes/:id
+const modifierStatutPreparation = async (req, res) => {
+  try {
+    const { statutPreparation } = req.body;
+
+    // 1. Validation des statuts autorisés
+    const statutsValides = ['En attente', 'Préparation', 'Prêt', 'Archive'];
+    if (!statutsValides.includes(statutPreparation)) {
+      return res.status(400).json({ success: false, error: "Statut de préparation invalide" });
+    }
+
+    // 2. Trouver la commande actuelle en base de données
+    const commandeActuelle = await Commande.findById(req.params.id);
+
+    if (!commandeActuelle) {
+      return res.status(404).json({ success: false, error: "Commande introuvable" });
+    }
+
+    // 3. 🚨 LE VERROU : Si le cuisinier veut passer de 'En attente' à 'Préparation'
+    if (statutPreparation === 'Préparation' && commandeActuelle.statutCommande !== 'PAYE') {
+      return res.status(400).json({ 
+        success: false, 
+        error: "🔒 Action impossible : La cuisine ne peut pas préparer une commande non payée !" 
+      });
+    }
+
+    // 4. Tout est OK (le client a payé ou c'est une étape suivante), on met à jour
+    const commandeMiseAJour = await Commande.findByIdAndUpdate(
+      req.params.id,
+      { statutPreparation },
+      { new: true, runValidators: true }
+    );
+
+    // Émettre l'événement Socket.io pour que tous les écrans connectés se mettent à jour
+    req.io.emit('statut_commande_change', { 
+      id: commandeMiseAJour._id, 
+      statutPreparation: commandeMiseAJour.statutPreparation 
+    });
+
+    res.status(200).json({ success: true, data: commandeMiseAJour });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   creerCommande,
   getCommandes,
-  modifierStatutCommande
+  modifierStatutCommande,
+  modifierStatutPreparation   
 };
