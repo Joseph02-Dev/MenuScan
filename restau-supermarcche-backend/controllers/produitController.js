@@ -4,7 +4,9 @@ const Produit = require('../models/produits');
 // @route   POST /api/produits
 const ajouterProduit = async (req, res) => {
   try {
-    const nouveauProduit = await Produit.create(req.body);
+    const data = { ...req.body };
+    if (req.file) data.image = `/uploads/${req.file.filename}`;
+    const nouveauProduit = await Produit.create(data);
     res.status(201).json({ success: true, data: nouveauProduit });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
@@ -22,7 +24,7 @@ const getProduits = async (req, res) => {
   }
 };
 
-// @desc    Rechercher un produit par son code-barres (Scan & Go)
+// @desc    Rechercher un produit par son code-barres (Scan & Go) avec contrôle de stock
 // @route   GET /api/produits/scan/:codeBarre
 const scannerProduit = async (req, res) => {
   try {
@@ -35,6 +37,14 @@ const scannerProduit = async (req, res) => {
       return res.status(404).json({ 
         success: false, 
         error: "Produit non référencé dans ce magasin." 
+      });
+    }
+
+    // 🔒 VERROU DE SÉCURITÉ : Bloquer le scan si le produit est en rupture de stock
+    if (produit.stock <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Désolé, le produit "${produit.nom}" est actuellement en rupture de stock.`
       });
     }
 

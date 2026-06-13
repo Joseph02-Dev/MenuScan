@@ -1,5 +1,6 @@
 const Commande = require('../models/commande');
 const Produit = require('../models/produits');
+const Transaction = require('../models/Transaction');
 
 // @desc    Créer une nouvelle commande (Resto ou Supermarché)
 // @route   POST /api/commandes
@@ -55,90 +56,72 @@ const creerCommande = async (req, res) => {
   }
 };
 
-// @desc    Récupérer les commandes (Optionnel : filtrer par plateforme ou statut)
-// @route   GET /api/commandes
-const getCommandes = async (req, res) => {
-  try {
-    const query = {};
-    
-    // Permet de filtrer dans Postman via /api/commandes?typePlateforme=restaurant
-    if (req.query.typePlateforme) {
-      query.typePlateforme = req.query.typePlateforme;
-    }
-    if (req.query.statutCommande) {
-      query.statutCommande = req.query.statutCommande;
-    }
 
-    const commandes = await Commande.find(query).sort({ createdAt: -1 }); // Plus récentes en premier
-    res.status(200).json({ success: true, count: commandes.length, data: commandes });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// @desc    Mettre à jour le statut d'une commande (ex: pour l'écran cuisine)
-// @route   PUT /api/commandes/:id
-const modifierStatutCommande = async (req, res) => {
-  try {
-    const { statutCommande } = req.body;
-
-    const commande = await Commande.findByIdAndUpdate(
-      req.params.id,
-      { statutCommande },
-      { new: true, runValidators: true }
-    );
-
-    if (!commande) {
-      return res.status(404).json({ success: false, error: "Commande introuvable" });
-    }
-
-    res.status(200).json({ success: true, data: commande });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-};
-
-// @desc    Mettre à jour le statut de préparation d'une commande (Cuisine) avec verrou de paiement
+// @desc    Mettre à jour le statut de la commande (Cuisine) avec double verrou de paiement
 // @route   PUT /api/commandes/:id
 const modifierStatutPreparation = async (req, res) => {
   try {
-    const { statutPreparation } = req.body;
+    // 1. On récupère TOUT le body proprement
+    const { statutCommande } = req.body; // On attend 'PREPARATION', 'PRET' ou 'ANNULE'
+    const commandeId = req.params.id;
 
-    // 1. Validation des statuts autorisés
-    const statutsValides = ['En attente', 'Préparation', 'Prêt', 'Archive'];
-    if (!statutsValides.includes(statutPreparation)) {
-      return res.status(400).json({ success: false, error: "Statut de préparation invalide" });
+    // Petite sécurité au cas où le body arrive totalement vide
+    if (!statutCommande) {
+      return res.status(400).json({ success: false, error: "Le champ 'statutCommande' est obligatoire dans la requête." });
     }
 
     // 2. Trouver la commande actuelle en base de données
-    const commandeActuelle = await Commande.findById(req.params.id);
+    const commandeActuelle = await Commande.findById(commandeId);
 
     if (!commandeActuelle) {
       return res.status(404).json({ success: false, error: "Commande introuvable" });
     }
 
-    // 3. 🚨 LE VERROU : Si le cuisinier veut passer de 'En attente' à 'Préparation'
-    if (statutPreparation === 'Préparation' && commandeActuelle.statutCommande !== 'PAYE') {
-      return res.status(400).json({ 
-        success: false, 
-        error: "🔒 Action impossible : La cuisine ne peut pas préparer une commande non payée !" 
+    // 3. 🚨 LE VERROU STRICT : Si la cuisine veut commencer à préparer ('PREPARATION')
+    if (statutCommande === 'PREPARATION') {
+      
+      // Vérification A : Est-ce que le statut actuel en BDD est déjà marqué PAYE ?
+      const estMarquePaye = commandeActuelle.statutCommande === 'PAYE';
+
+      // Vérification B : Recherche d'une transaction Mobile Money réussie en BDD pour cette commande
+      const transactionValide = await Transaction.findOne({
+        commandeId: commandeId,
+        statutPaiement: 'SUCCESS'
+      });
+
+      // Si le client n'a pas payé et qu'aucune transaction n'est valide, on bloque !
+      if (!estMarquePaye && !transactionValide) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "🔒 Action refusée : Impossible d'envoyer en préparation. Cette commande n'a pas été payée par le client !" 
+        });
+      }
+    }
+
+    // 4. Tout est OK, on applique le nouveau statut (PREPARATION, PRET, etc.)
+    commandeActuelle.statutCommande = statutCommande;
+    await commandeActuelle.save();
+
+    // Émettre le signal Socket.io en temps réel
+    if (req.io) {
+      req.io.emit('statut_commande_change', { 
+        id: commandeActuelle._id, 
+        statutCommande: commandeActuelle.statutCommande 
       });
     }
 
-    // 4. Tout est OK (le client a payé ou c'est une étape suivante), on met à jour
-    const commandeMiseAJour = await Commande.findByIdAndUpdate(
-      req.params.id,
-      { statutPreparation },
-      { new: true, runValidators: true }
-    );
+    res.status(200).json({ success: true, data: commandeActuelle });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
-    // Émettre l'événement Socket.io pour que tous les écrans connectés se mettent à jour
-    req.io.emit('statut_commande_change', { 
-      id: commandeMiseAJour._id, 
-      statutPreparation: commandeMiseAJour.statutPreparation 
-    });
-
-    res.status(200).json({ success: true, data: commandeMiseAJour });
+// @desc    Récupérer toutes les commandes
+// @route   GET /api/commandes
+const getCommandes = async (req, res) => {
+  try {
+    const commandes = await Commande.find({});
+    res.status(200).json({ success: true, data: commandes });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -147,6 +130,5 @@ const modifierStatutPreparation = async (req, res) => {
 module.exports = {
   creerCommande,
   getCommandes,
-  modifierStatutCommande,
   modifierStatutPreparation   
 };

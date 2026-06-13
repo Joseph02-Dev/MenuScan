@@ -31,6 +31,15 @@ const ProduitSchema = new mongoose.Schema({
     type: Boolean,
     default: true // Pour que la cuisine puisse marquer un plat en rupture
   },
+  stock: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  image: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

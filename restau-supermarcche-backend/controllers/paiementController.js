@@ -1,5 +1,6 @@
 const Transaction = require('../models/Transaction');
 const Commande = require('../models/commande');
+const Produit = require('../models/produits'); // <-- 1. IMPORTATION DU MODÈLE PRODUIT
 
 // @desc    Initier et simuler un paiement Mobile Money
 // @route   POST /api/paiements/initier
@@ -27,7 +28,6 @@ const initierPaiement = async (req, res) => {
     });
 
     // 4. SIMULATION DE LA SÉCURITÉ OPÉRATEUR (Validation automatique)
-    // Dans la réalité, l'opérateur envoie un webhook. Ici, on simule que le client a tapé son code secret.
     transaction.statutPaiement = 'SUCCESS';
     
     // Si c'est du Scan & Go (Supermarché), on génère le token du QR Code de sortie
@@ -37,12 +37,26 @@ const initierPaiement = async (req, res) => {
     
     await transaction.save();
 
+    // 🚨 2. MISE À JOUR DES STOCKS AUTOMATIQUE APRÈS PAIEMENT RÉUSSI
+    for (const item of commande.articles) {
+      const produit = await Produit.findById(item.produitId);
+      if (produit) {
+        // Soustraction de la quantité achetée
+        produit.stock = produit.stock - item.quantite;
+
+        // Éviter les stocks négatifs par sécurité
+        if (produit.stock < 0) produit.stock = 0;
+
+        await produit.save();
+        console.log(`📉 Stock mis à jour : ${produit.nom} | Nouveau stock : ${produit.stock}`);
+      }
+    }
+
     // 5. Mettre à jour le statut de la commande associée
     commande.statutCommande = 'PAYE';
     await commande.save();
 
     // 6. Alerte temps réel via WebSockets si nécessaire
-    // Si c'est un resto, on peut notifier la cuisine ou le serveur que la table X a payé
     if (commande.typePlateforme === 'restaurant') {
       req.io.to('cuisine').emit('commande_payee', { commandeId: commande._id, table: commande.table });
     }
@@ -55,7 +69,7 @@ const initierPaiement = async (req, res) => {
         reference: transaction.referenceTransaction,
         montant: transaction.montant,
         statutCommande: commande.statutCommande,
-        qrCodeSortie: transaction.qrCodeSortie || null // Affiché sur le front sous forme de QR Code
+        qrCodeSortie: transaction.qrCodeSortie || null
       }
     });
 
@@ -80,7 +94,7 @@ const validerSortie = async (req, res) => {
     if (!transaction) {
       return res.status(404).json({ 
         success: false, 
-        action: "REMAIN", // Code pour le Front (ex: afficher un écran ROUGE au vigile)
+        action: "REMAIN", 
         error: "QR Code invalide ou inconnu. Alerte fraude possible." 
       });
     }
@@ -111,7 +125,7 @@ const validerSortie = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      action: "ALLOW_OUT", // Code pour le Front (ex: afficher un écran VERT / Ouvrir le portique)
+      action: "ALLOW_OUT", 
       message: "Sortie autorisée. Merci de votre visite !",
       data: {
         Client: req.utilisateur?.nom || "Client Scan & Go",

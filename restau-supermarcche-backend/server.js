@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const http = require('http'); // 1. Importer le module HTTP natif
 const { Server } = require('socket.io'); // 2. Importer Socket.io
 const connectDB = require('./config/db.js');
@@ -28,6 +29,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rendre l'instance 'io' accessible dans nos contrôleurs Express via l'objet 'req'
 app.use((req, res, next) => {
