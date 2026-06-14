@@ -182,46 +182,61 @@ export default function SupermarchePage() {
               const inCart = items.find(it => it.produitId === p._id);
               return (
                 <div key={p._id}
-                  style={{ background: 'var(--surface-raised)', border: `1px solid ${inCart ? 'rgba(56,189,248,0.35)' : 'var(--border)'}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', transition: 'transform 0.2s ease, box-shadow 0.2s ease', boxShadow: inCart ? '0 0 20px rgba(56,189,248,0.12)' : '0 2px 8px rgba(0,0,0,0.2)', animation: `cardIn 0.4s ease ${i * 0.05}s both` }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = inCart ? '0 8px 28px rgba(56,189,248,0.18)' : '0 8px 24px rgba(0,0,0,0.35)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = inCart ? '0 0 20px rgba(56,189,248,0.12)' : '0 2px 8px rgba(0,0,0,0.2)'; }}
+                  style={{ background: 'var(--surface-raised)', border: `1.5px solid ${inCart ? 'rgba(56,189,248,0.4)' : 'var(--border)'}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', transition: 'transform 0.2s ease, box-shadow 0.2s ease', boxShadow: inCart ? '0 0 24px rgba(56,189,248,0.14)' : '0 2px 12px rgba(0,0,0,0.18)', animation: `springIn 0.5s var(--spring) ${i * 0.05}s both` }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = inCart ? '0 12px 32px rgba(56,189,248,0.22)' : '0 12px 28px rgba(0,0,0,0.32)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = inCart ? '0 0 24px rgba(56,189,248,0.14)' : '0 2px 12px rgba(0,0,0,0.18)'; }}
                 >
-                  <div className="product-card-img" style={{ height: 160, overflow: 'hidden', position: 'relative' }}>
+                  <div className="product-card-img" style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
                     <img
                       src={getProductImage(p, i)}
                       alt={p.nom}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
                       onError={e => { e.target.src = GROCERY_IMAGES[i % GROCERY_IMAGES.length]; }}
-                      onMouseEnter={e => { e.target.style.transform = 'scale(1.06)'; }}
+                      onMouseEnter={e => { e.target.style.transform = 'scale(1.07)'; }}
                       onMouseLeave={e => { e.target.style.transform = 'scale(1)'; }}
                     />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,15,30,0.7) 0%, transparent 55%)' }} />
-                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
-                      <Badge variant="default">{p.categorie}</Badge>
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,15,30,0.75) 0%, transparent 55%)' }} />
+                    <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem' }}>
+                      <span style={{ background: 'rgba(10,15,30,0.75)', backdropFilter: 'blur(8px)', color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '100px', border: '1px solid var(--border-strong)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        {p.categorie}
+                      </span>
                     </div>
                     {p.codeBarre && (
-                      <div style={{ position: 'absolute', bottom: '0.6rem', left: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Barcode size={11} color="rgba(255,255,255,0.6)" />
-                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)' }}>{p.codeBarre}</span>
+                      <div style={{ position: 'absolute', bottom: '0.75rem', left: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Barcode size={11} color="rgba(255,255,255,0.55)" />
+                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-mono)' }}>{p.codeBarre}</span>
                       </div>
                     )}
                   </div>
                   <div style={{ padding: '1rem' }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.3rem' }}>{p.nom}</h3>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--sky)', fontFamily: 'var(--font-mono)', marginBottom: '0.875rem' }}>
-                      {p.prix.toLocaleString()} GNF
+                    <h3 className="product-name" style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-display)', marginBottom: '0.4rem', lineHeight: 1.3 }}>{p.nom}</h3>
+                    <div className="product-price" style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--sky)', fontFamily: 'var(--font-display)', marginBottom: '0.875rem' }}>
+                      {p.prix.toLocaleString()} <span style={{ fontSize: '0.7em', fontWeight: 600, opacity: 0.8 }}>GNF</span>
                     </div>
                     {inCart ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <button onClick={() => updateQty(p._id, inCart.quantite - 1)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}><Minus size={13} /></button>
-                        <span style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{inCart.quantite}</span>
-                        <button onClick={() => updateQty(p._id, inCart.quantite + 1)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--sky)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E' }}><Plus size={13} /></button>
-                        <button onClick={() => removeItem(p._id)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--crimson-dim)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--crimson)' }}><Trash2 size={12} /></button>
+                        <button onClick={() => updateQty(p._id, inCart.quantite - 1)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0, transition: 'all 0.15s var(--spring)' }}><Minus size={15} /></button>
+                        <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>{inCart.quantite}</span>
+                        <button onClick={() => updateQty(p._id, inCart.quantite + 1)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--sky)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E', flexShrink: 0, transition: 'all 0.15s var(--spring)' }}><Plus size={15} /></button>
+                        <button onClick={() => removeItem(p._id)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--crimson-dim)', border: '1.5px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--crimson)', flexShrink: 0 }}><Trash2 size={14} /></button>
                       </div>
                     ) : (
-                      <Btn onClick={() => { addItem(p); show(`${p.nom} ajouté au panier`, 'success'); }} variant="outline" size="sm" icon={Plus} style={{ width: '100%' }}>
-                        Ajouter
-                      </Btn>
+                      <button
+                        onClick={() => { addItem(p); show(`${p.nom} ajouté !`, 'success'); }}
+                        style={{
+                          width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)',
+                          background: 'var(--sky-dim)', border: '1.5px solid rgba(56,189,248,0.4)',
+                          color: 'var(--sky)', fontWeight: 700, fontSize: '0.92rem',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                          cursor: 'pointer', transition: 'all 0.18s ease', fontFamily: 'var(--font-body)',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--sky)'; e.currentTarget.style.color = '#0A0F1E'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--sky-dim)'; e.currentTarget.style.color = 'var(--sky)'; }}
+                      >
+                        <Plus size={17} strokeWidth={2.5} />
+                        Ajouter au panier
+                      </button>
                     )}
                   </div>
                 </div>
@@ -248,9 +263,9 @@ export default function SupermarchePage() {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{item.prixUnitaire.toLocaleString()} GNF / unité</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <button onClick={() => updateQty(item.produitId, item.quantite - 1)} style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}><Minus size={12} /></button>
-                  <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', minWidth: 24, textAlign: 'center' }}>{item.quantite}</span>
-                  <button onClick={() => updateQty(item.produitId, item.quantite + 1)} style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--sky)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E' }}><Plus size={12} /></button>
+                  <button onClick={() => updateQty(item.produitId, item.quantite - 1)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s var(--spring)', flexShrink: 0 }}><Minus size={14} /></button>
+                  <span style={{ fontWeight: 800, fontFamily: 'var(--font-mono)', minWidth: 28, textAlign: 'center', fontSize: '1rem' }}>{item.quantite}</span>
+                  <button onClick={() => updateQty(item.produitId, item.quantite + 1)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--sky)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E', transition: 'all 0.15s var(--spring)', flexShrink: 0 }}><Plus size={14} /></button>
                 </div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--sky)', minWidth: 90, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
                   {(item.prixUnitaire * item.quantite).toLocaleString()} GNF

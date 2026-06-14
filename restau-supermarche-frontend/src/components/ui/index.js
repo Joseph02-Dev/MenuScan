@@ -4,36 +4,39 @@ import { Loader2, X, ScanLine, Camera } from 'lucide-react';
 /* ── Button ── */
 export const Btn = ({ children, variant = 'primary', size = 'md', loading, icon: Icon, style: extraStyle = {}, ...props }) => {
   const sizes = {
-    sm: { padding: '0.45rem 0.9rem', fontSize: '0.8rem' },
-    md: { padding: '0.7rem 1.4rem', fontSize: '0.88rem' },
-    lg: { padding: '0.9rem 1.9rem', fontSize: '0.95rem' },
-    icon: { padding: '0.65rem', fontSize: '0.88rem' },
+    sm:   { padding: '0.5rem 1rem',    fontSize: '0.82rem', iconSize: 14, minHeight: 38 },
+    md:   { padding: '0.72rem 1.5rem', fontSize: '0.9rem',  iconSize: 16, minHeight: 44 },
+    lg:   { padding: '0.9rem 2rem',    fontSize: '0.98rem', iconSize: 18, minHeight: 50 },
+    icon: { padding: '0.7rem',         fontSize: '0.9rem',  iconSize: 16, minHeight: 44 },
   };
   const variants = {
-    primary: { background: 'var(--gold)', color: 'var(--night)', borderColor: 'var(--gold)', fontWeight: 600 },
-    secondary: { background: 'var(--surface-raised)', color: 'var(--text-primary)', borderColor: 'var(--border-strong)', fontWeight: 500 },
-    ghost: { background: 'transparent', color: 'var(--text-secondary)', borderColor: 'transparent', fontWeight: 500 },
-    danger: { background: 'var(--crimson-dim)', color: 'var(--crimson)', borderColor: 'rgba(239,68,68,0.35)', fontWeight: 500 },
-    success: { background: 'var(--emerald-dim)', color: 'var(--emerald)', borderColor: 'rgba(16,185,129,0.35)', fontWeight: 500 },
-    outline: { background: 'transparent', color: 'var(--gold)', borderColor: 'var(--gold)', fontWeight: 500 },
-    violet: { background: 'var(--violet-dim)', color: 'var(--violet)', borderColor: 'rgba(167,139,250,0.35)', fontWeight: 500 },
+    primary:   { background: 'var(--gold)',          color: 'var(--night)',        borderColor: 'var(--gold)',                  fontWeight: 700 },
+    secondary: { background: 'var(--surface-raised)', color: 'var(--text-primary)', borderColor: 'var(--border-strong)',         fontWeight: 500 },
+    ghost:     { background: 'transparent',           color: 'var(--text-secondary)', borderColor: 'transparent',               fontWeight: 500 },
+    danger:    { background: 'var(--crimson-dim)',    color: 'var(--crimson)',      borderColor: 'rgba(239,68,68,0.35)',         fontWeight: 600 },
+    success:   { background: 'var(--emerald-dim)',    color: 'var(--emerald)',      borderColor: 'rgba(16,185,129,0.35)',        fontWeight: 600 },
+    outline:   { background: 'transparent',           color: 'var(--gold)',         borderColor: 'var(--gold)',                  fontWeight: 600 },
+    violet:    { background: 'var(--violet-dim)',     color: 'var(--violet)',       borderColor: 'rgba(167,139,250,0.35)',       fontWeight: 500 },
   };
+  const s = sizes[size] || sizes.md;
   return (
     <button
       disabled={loading || props.disabled}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem',
-        fontFamily: 'var(--font-body)', borderRadius: 'var(--radius-md)', border: '1px solid transparent',
+        fontFamily: 'var(--font-body)', borderRadius: 'var(--radius-md)', border: '1.5px solid transparent',
         cursor: (loading || props.disabled) ? 'not-allowed' : 'pointer',
         opacity: (loading || props.disabled) ? 0.6 : 1,
         transition: 'all var(--transition)', whiteSpace: 'nowrap',
-        ...sizes[size], ...variants[variant], ...extraStyle,
+        minHeight: s.minHeight,
+        padding: s.padding, fontSize: s.fontSize,
+        ...variants[variant], ...extraStyle,
       }}
       {...props}
     >
       {loading
-        ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
-        : Icon && <Icon size={15} />}
+        ? <Loader2 size={s.iconSize} style={{ animation: 'spin 1s linear infinite' }} />
+        : Icon && <Icon size={s.iconSize} strokeWidth={2.2} />}
       {children}
     </button>
   );
@@ -127,14 +130,14 @@ export const StatCard = ({ label, value, icon: Icon, color = 'var(--gold)', sub 
 
 /* ── Empty State ── */
 export const EmptyState = ({ icon: Icon, title, desc, action }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 2rem', textAlign: 'center', gap: '1rem' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 2rem', textAlign: 'center', gap: '1.1rem', animation: 'fadeUp 0.4s ease' }}>
     {Icon && (
-      <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon size={26} color="var(--gold)" />
+      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--gold-dim)', border: '1.5px solid rgba(245,166,35,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={32} color="var(--gold)" strokeWidth={1.8} />
       </div>
     )}
-    <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>{title}</h3>
-    {desc && <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', maxWidth: 300 }}>{desc}</p>}
+    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>{title}</h3>
+    {desc && <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: 320, lineHeight: 1.6 }}>{desc}</p>}
     {action}
   </div>
 );
@@ -175,10 +178,10 @@ export const Modal = ({ open, onClose, title, children, width = 480 }) => {
 export const PageHeader = ({ title, subtitle, action }) => (
   <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
     <div>
-      <h1 style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1.2 }}>{title}</h1>
-      {subtitle && <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.35rem' }}>{subtitle}</p>}
+      <h1 style={{ fontSize: '1.85rem', fontWeight: 800, fontFamily: 'var(--font-display)', lineHeight: 1.15, letterSpacing: '-0.02em' }}>{title}</h1>
+      {subtitle && <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.4rem' }}>{subtitle}</p>}
     </div>
-    {action && <div>{action}</div>}
+    {action && <div style={{ flexShrink: 0 }}>{action}</div>}
   </div>
 );
 

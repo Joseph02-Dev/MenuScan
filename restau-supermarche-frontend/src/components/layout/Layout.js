@@ -164,14 +164,34 @@ export default function Layout({ children }) {
       )}
 
       {/* Mobile top bar */}
-      <div className="mobile-topbar" style={{ display: 'none', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '1rem 1.25rem', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="mobile-topbar" style={{ display: 'none', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '0 1.25rem', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+        {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Zap size={18} color="var(--gold)" />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem' }}>MenuScan</span>
+          <div style={{ width: 34, height: 34, borderRadius: 'var(--radius-sm)', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={18} color="#0A0F1E" strokeWidth={2.5} />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', lineHeight: 1.1 }}>MenuScan</div>
+            <div style={{ fontSize: '0.6rem', color: meta.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{meta.label}</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {count > 0 && <div style={{ position: 'relative' }}><ShoppingBag size={20} color="var(--text-secondary)" /><span style={{ position: 'absolute', top: -6, right: -6, background: 'var(--gold)', color: '#0A0F1E', borderRadius: '50%', width: 16, height: 16, fontSize: '0.62rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{count}</span></div>}
-          <button onClick={() => setOpen(!open)} style={{ color: 'var(--text-secondary)', lineHeight: 0 }}>{open ? <X size={22} /> : <Menu size={22} />}</button>
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          {/* Burger */}
+          <button
+            onClick={() => setOpen(!open)}
+            style={{
+              width: 44, height: 44,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 'var(--radius-md)',
+              background: open ? 'var(--surface-hover)' : 'transparent',
+              color: 'var(--text-primary)',
+              border: '1.5px solid ' + (open ? 'var(--border-strong)' : 'transparent'),
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {open ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2} />}
+          </button>
         </div>
       </div>
 

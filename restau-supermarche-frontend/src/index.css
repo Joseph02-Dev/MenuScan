@@ -21,41 +21,127 @@
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
   --text-muted: #475569;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --font-display: 'Syne', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font-body); background: var(--night); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: var(--font-body);
+  background: var(--night);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  font-size: 15px;
+  overscroll-behavior: none;
+}
 #root { min-height: 100vh; }
 h1,h2,h3,h4,h5 { font-family: var(--font-display); }
-button { cursor: pointer; border: none; background: none; font-family: var(--font-body); }
-input,select,textarea { font-family: var(--font-body); outline: none; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary); border-radius: var(--radius-sm); padding: 0.75rem 1rem; width: 100%; font-size: 0.9rem; transition: border-color var(--transition), box-shadow var(--transition); }
-input:focus,select:focus,textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
-input::placeholder,textarea::placeholder { color: var(--text-muted); }
+
+button {
+  cursor: pointer; border: none; background: none;
+  font-family: var(--font-body);
+  transition: transform 0.12s var(--spring), opacity 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+button:active { transform: scale(0.93) !important; opacity: 0.88 !important; }
+
+input, select, textarea {
+  font-family: var(--font-body);
+  outline: none;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1.1rem;
+  width: 100%;
+  font-size: 1rem;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px var(--gold-dim);
+  transform: translateY(-1px);
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
 select option { background: var(--surface-raised); }
 a { color: inherit; text-decoration: none; }
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--night); }
-::-webkit-scrollbar-thumb { background: var(--surface-raised); border-radius: 3px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-@keyframes scaleIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
-@keyframes cardIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-@keyframes bounceIn { 0%{opacity:0;transform:scale(0.7)} 60%{transform:scale(1.05)} 80%{transform:scale(0.97)} 100%{opacity:1;transform:scale(1)} }
-@keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes glow { 0%,100%{box-shadow:0 0 8px rgba(245,166,35,0.3)} 50%{box-shadow:0 0 22px rgba(245,166,35,0.6)} }
-@keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
 
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+/* ── Keyframes ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:translateX(0); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+@keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(28px) scale(0.95); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+@keyframes bounceIn {
+  0%   { opacity:0; transform:scale(0.6); }
+  55%  { transform:scale(1.08); }
+  75%  { transform:scale(0.96); }
+  100% { opacity:1; transform:scale(1); }
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-100%); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(48px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes springIn {
+  0%   { opacity:0; transform:scale(0.8) translateY(32px); }
+  65%  { transform:scale(1.03) translateY(-5px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes glow { 0%,100%{box-shadow:0 0 10px rgba(245,166,35,0.35)} 50%{box-shadow:0 0 28px rgba(245,166,35,0.65)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+@keyframes wiggle {
+  0%,100%{transform:rotate(0deg)}
+  20%{transform:rotate(-14deg)}
+  40%{transform:rotate(14deg)}
+  60%{transform:rotate(-10deg)}
+  80%{transform:rotate(8deg)}
+}
+@keyframes ripple {
+  from { transform:scale(0); opacity:0.6; }
+  to   { transform:scale(4); opacity:0; }
+}
+@keyframes fabPop {
+  0%   { transform:scale(0) rotate(-180deg); opacity:0; }
+  70%  { transform:scale(1.15) rotate(8deg); }
+  100% { transform:scale(1) rotate(0deg); opacity:1; }
+}
+@keyframes badgePulse {
+  0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(239,68,68,0.5); }
+  50%     { transform:scale(1.18); box-shadow:0 0 0 6px rgba(239,68,68,0); }
+}
+
+/* ── Utility animation classes ── */
+.anim-float   { animation: float 3s ease-in-out infinite; }
+.anim-glow    { animation: glow 2s ease-in-out infinite; }
+.anim-wiggle  { animation: wiggle 0.55s ease; }
+.anim-springIn { animation: springIn 0.5s var(--spring) both; }
+.anim-bounceIn { animation: bounceIn 0.45s var(--spring) both; }
+.anim-pulse   { animation: pulse 2s ease-in-out infinite; }
+
+/* ── Skeleton ── */
 .skeleton {
   background: linear-gradient(90deg, var(--surface-raised) 25%, var(--surface-hover) 50%, var(--surface-raised) 75%);
   background-size: 400px 100%;
@@ -63,38 +149,86 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--radius-sm);
 }
 
-/* ── Responsive ── */
+/* ── FAB (Floating Action Button) ── */
+.fab { display: none !important; }
+
+/* ── Mobile bottom safe area ── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+/* ────────────────────────────────────────────
+   RESPONSIVE — TABLET  (≤ 768px)
+──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .page-wrap { padding: 1.25rem 1rem !important; }
 
-  .page-header { flex-direction: column !important; align-items: center !important; text-align: center !important; }
-  .page-header h1 { font-size: 1.3rem !important; }
-  .page-header p { font-size: 0.83rem !important; }
+  body { font-size: 16px; }
 
-  .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; }
+  /* Prevent iOS input zoom */
+  input, select, textarea { font-size: 16px !important; }
 
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important; gap: 0.875rem !important; }
-  .product-card-img { height: 130px !important; }
+  /* Larger touch targets */
+  button { min-height: 44px; }
 
+  .page-wrap { padding: 1.25rem 1rem 100px !important; }
+
+  .page-header { flex-direction: column !important; align-items: flex-start !important; text-align: left !important; }
+  .page-header h1 { font-size: 1.6rem !important; }
+  .page-header p  { font-size: 0.9rem !important; }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Products — 2 colonnes sur mobile */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.875rem !important;
+  }
+  .product-card-img { height: 160px !important; }
+
+  /* Kitchen */
   .kitchen-grid { grid-template-columns: 1fr !important; }
 
-  .cat-tabs { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; padding-bottom: 4px; scroll-snap-type: x mandatory; }
+  /* Category tabs */
+  .cat-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
   .cat-tabs::-webkit-scrollbar { display: none; }
-  .cat-tabs > * { flex-shrink: 0 !important; scroll-snap-align: start; }
+  .cat-tabs > * {
+    flex-shrink: 0 !important;
+    scroll-snap-align: start;
+    padding: 0.6rem 1.1rem !important;
+    font-size: 0.88rem !important;
+    min-height: 44px !important;
+  }
 
   .filter-row { flex-direction: column !important; align-items: stretch !important; gap: 0.75rem !important; }
   .filter-row input { max-width: 100% !important; }
-  .filter-row > div:first-child { flex: unset !important; }
 
+  /* Modal as bottom sheet */
   .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
   .modal-box {
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
-    padding: 1.5rem 1.25rem 2rem !important;
-    max-height: 88vh !important;
+    border-radius: 28px 28px 0 0 !important;
+    padding: 1.75rem 1.25rem 2.5rem !important;
+    max-height: 92vh !important;
     overflow-y: auto !important;
-    animation: slideUp 0.3s ease !important;
+    animation: slideUp 0.35s cubic-bezier(0.32,0.72,0,1) !important;
     width: 100% !important;
     max-width: 100% !important;
+  }
+  /* Drag indicator */
+  .modal-box::before {
+    content: '';
+    display: block;
+    width: 40px; height: 4px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    margin: 0 auto 1.5rem;
   }
 
   .scan-form { flex-direction: column !important; }
@@ -105,14 +239,31 @@ a { color: inherit; text-decoration: none; }
   .total-cta-btns > * { flex: 1 !important; }
 
   .table-wrap { -webkit-overflow-scrolling: touch; border-radius: var(--radius-md) !important; }
-
   .cuisine-action { flex-direction: column !important; align-items: flex-start !important; gap: 0.5rem !important; }
+
+  /* FAB visible on mobile */
+  .fab { display: flex !important; }
+
+  /* Larger product card text */
+  .product-name  { font-size: 1rem !important; }
+  .product-price { font-size: 1.15rem !important; }
 }
 
+/* ────────────────────────────────────────────
+   RESPONSIVE — SMALL PHONE  (≤ 480px)
+──────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .page-wrap { padding: 1rem 0.75rem !important; }
-  .stats-grid { grid-template-columns: 1fr !important; }
-  .product-grid { grid-template-columns: 1fr 1fr !important; gap: 0.625rem !important; }
-  .product-card-img { height: 110px !important; }
-  .page-header h1 { font-size: 1.2rem !important; }
+  .page-wrap { padding: 1rem 0.875rem 100px !important; }
+  .stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.65rem !important; }
+  .product-card-img { height: 140px !important; }
+  .page-header h1 { font-size: 1.4rem !important; }
+}
+
+/* ────────────────────────────────────────────
+   RESPONSIVE — TABLET LANDSCAPE  (768–1024px)
+──────────────────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
+  .product-card-img { height: 170px !important; }
 }
