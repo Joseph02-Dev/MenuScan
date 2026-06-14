@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { QrCode, ShieldCheck, ShieldAlert, ScanLine } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { QrCode, ShieldCheck, ShieldAlert, ScanLine, Camera } from 'lucide-react';
 import { paiementsAPI } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { Btn, PageHeader } from '../../components/ui';
+import { Btn, PageHeader, CameraScanner } from '../../components/ui';
 
 export default function SortiePage() {
   const [qrCode, setQrCode] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const { show } = useToast();
 
-  const handleValidate = async (e) => {
-    e.preventDefault();
-    if (!qrCode.trim()) return;
+  const validate = async (code) => {
+    if (!code.trim()) return;
     setLoading(true);
     setResult(null);
     try {
-      const res = await paiementsAPI.validerSortie({ qrCodeScanne: qrCode.trim() });
+      const res = await paiementsAPI.validerSortie({ qrCodeScanne: code.trim() });
       setResult({ ok: true, ...res.data });
       show('Sortie autorisée !', 'success');
     } catch (err) {
@@ -25,6 +25,13 @@ export default function SortiePage() {
       show('Accès refusé', 'error');
     } finally { setLoading(false); }
   };
+
+  const handleValidate = (e) => { e.preventDefault(); validate(qrCode); };
+
+  const handleCameraScan = useCallback((decoded) => {
+    setQrCode(decoded);
+    validate(decoded);
+  }, []);
 
   return (
     <div className="page-wrap" style={{ padding: '2rem', maxWidth: 680, margin: '0 auto' }}>
@@ -40,8 +47,26 @@ export default function SortiePage() {
           </div>
           <div>
             <h2 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Scanner le QR Code</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Utilisez un lecteur ou saisissez manuellement</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Caméra ou saisie manuelle</p>
           </div>
+        </div>
+
+        {/* Bouton scan caméra */}
+        <button
+          type="button"
+          onClick={() => setCameraOpen(true)}
+          style={{ width: '100%', marginBottom: '1.25rem', padding: '1.1rem', borderRadius: 'var(--radius-md)', border: '2px dashed var(--gold)', background: 'var(--gold-dim)', color: 'var(--gold)', fontSize: '0.92rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'all var(--transition)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,166,35,0.22)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gold-dim)'; }}
+        >
+          <Camera size={18} />
+          Scanner avec la caméra du téléphone
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ou saisir manuellement</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         </div>
 
         <form onSubmit={handleValidate}>
@@ -55,7 +80,6 @@ export default function SortiePage() {
                 style={{ paddingLeft: '2.4rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
                 value={qrCode}
                 onChange={e => setQrCode(e.target.value)}
-                autoFocus
               />
             </div>
           </div>
@@ -64,6 +88,13 @@ export default function SortiePage() {
           </Btn>
         </form>
       </div>
+
+      <CameraScanner
+        open={cameraOpen}
+        onScan={handleCameraScan}
+        onClose={() => setCameraOpen(false)}
+        mode="qrcode"
+      />
 
       {/* Result */}
       {result && (

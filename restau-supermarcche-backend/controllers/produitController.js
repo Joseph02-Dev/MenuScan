@@ -5,6 +5,8 @@ const Produit = require('../models/produits');
 const ajouterProduit = async (req, res) => {
   try {
     const data = { ...req.body };
+    // Supprimer codeBarre vide pour que l'index sparse fonctionne (null/undefined = ignoré)
+    if (!data.codeBarre) delete data.codeBarre;
     if (req.file) data.image = `/uploads/${req.file.filename}`;
     const nouveauProduit = await Produit.create(data);
     res.status(201).json({ success: true, data: nouveauProduit });
@@ -13,11 +15,13 @@ const ajouterProduit = async (req, res) => {
   }
 };
 
-// @desc    Récupérer tous les produits
+// @desc    Récupérer tous les produits (filtré par typePlateforme si fourni)
 // @route   GET /api/produits
 const getProduits = async (req, res) => {
   try {
-    const produits = await Produit.find();
+    const filtre = {};
+    if (req.query.typePlateforme) filtre.typePlateforme = req.query.typePlateforme;
+    const produits = await Produit.find(filtre);
     res.status(200).json({ success: true, count: produits.length, data: produits });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

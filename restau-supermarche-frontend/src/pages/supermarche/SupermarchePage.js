@@ -1,13 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Barcode, Plus, Minus, Trash2, CreditCard, ShoppingBag, X, ScanLine, QrCode } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Barcode, Plus, Minus, Trash2, CreditCard, ShoppingBag, X, ScanLine, QrCode, Search, ShoppingCart, Camera } from 'lucide-react';
 import { produitsAPI, commandesAPI, paiementsAPI } from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
-import { Btn, Badge, Spinner, EmptyState, Modal, PageHeader, StatCard } from '../../components/ui';
+import { Btn, Badge, Spinner, EmptyState, Modal, PageHeader, StatCard, CameraScanner } from '../../components/ui';
+
+const API_BASE = (process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000/api`).replace('/api', '');
+
+const GROCERY_IMAGES = [
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80',
+  'https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=400&q=80',
+  'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&q=80',
+  'https://images.unsplash.com/photo-1564303005-f90b0fbab4c2?w=400&q=80',
+  'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80',
+  'https://images.unsplash.com/photo-1585621386284-b648a92f27de?w=400&q=80',
+];
+
+const getProductImage = (p, i) => p.image ? `${API_BASE}${p.image}` : GROCERY_IMAGES[i % GROCERY_IMAGES.length];
 
 export default function SupermarchePage() {
+  const [produits, setProduits] = useState([]);
+  const [loadingProduits, setLoadingProduits] = useState(true);
+  const [search, setSearch] = useState('');
+  const [cat, setCat] = useState('Tous');
+
   const [barcode, setBarcode] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [payModal, setPayModal] = useState(false);
   const [payForm, setPayForm] = useState({ telephonePaiement: '', operateur: 'Orange Money' });
   const [paying, setPaying] = useState(false);
@@ -19,19 +38,45 @@ export default function SupermarchePage() {
 
   useEffect(() => { setPlateforme('supermarche'); }, [setPlateforme]);
 
-  const handleScan = async (e) => {
-    e.preventDefault();
-    if (!barcode.trim()) return;
+  const loadProduits = useCallback(async () => {
+    try {
+      const res = await produitsAPI.getAll({ typePlateforme: 'supermarche' });
+      setProduits(res.data.data || []);
+    } catch { show('Impossible de charger les articles', 'error'); }
+    finally { setLoadingProduits(false); }
+  }, [show]);
+
+  useEffect(() => { loadProduits(); }, [loadProduits]);
+
+  const categories = ['Tous', ...new Set(produits.map(p => p.categorie).filter(Boolean))];
+
+  const filtered = produits.filter(p =>
+    (cat === 'Tous' || p.categorie === cat) &&
+    p.nom.toLowerCase().includes(search.toLowerCase()) &&
+    p.estDisponible !== false
+  );
+
+  const scanBarcode = async (code) => {
     setScanning(true);
     try {
-      const res = await produitsAPI.scan(barcode.trim());
+      const res = await produitsAPI.scan(code.trim());
       addItem(res.data.data);
-      show(`✓ ${res.data.data.nom} ajouté`, 'success');
+      show(`✓ ${res.data.data.nom} ajouté au panier`, 'success');
       setBarcode('');
       inputRef.current?.focus();
     } catch (err) {
       show(err.response?.data?.error || 'Produit introuvable', 'error');
     } finally { setScanning(false); }
+  };
+
+  const handleScan = async (e) => {
+    e.preventDefault();
+    if (!barcode.trim()) return;
+    await scanBarcode(barcode);
+  };
+
+  const handleCameraScan = async (decoded) => {
+    await scanBarcode(decoded);
   };
 
   const handlePay = async () => {
@@ -54,69 +99,147 @@ export default function SupermarchePage() {
   };
 
   return (
-    <div className="page-wrap" style={{ padding: '2rem', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="page-wrap" style={{ padding: '2rem', maxWidth: 1200, margin: '0 auto' }}>
       <PageHeader
-        title="Scan & Go"
-        subtitle="Scannez les codes-barres, payez, sortez sans attendre."
+        title="Supermarché"
+        subtitle="Parcourez les articles ou scannez un code-barres"
         action={count > 0 && (
           <Btn onClick={() => setPayModal(true)} icon={CreditCard}>
-            Payer {total.toLocaleString()} GNF
+            Payer {total.toLocaleString()} GNF ({count})
           </Btn>
         )}
       />
 
       {/* Stats */}
       <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '2rem' }}>
-        <StatCard label="Articles scannés" value={count} icon={ShoppingBag} color="var(--sky)" sub="dans votre panier" />
+        <StatCard label="Articles dans le panier" value={count} icon={ShoppingBag} color="var(--sky)" sub="articles sélectionnés" />
         <StatCard label="Total à payer" value={`${total.toLocaleString()} GNF`} icon={CreditCard} color="var(--gold)" sub="Mobile Money" />
       </div>
 
       {/* Scanner zone */}
-      <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '2rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
-          <div style={{ width: 42, height: 42, borderRadius: 'var(--radius-md)', background: 'var(--sky-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ScanLine size={20} color="var(--sky)" />
+      <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--sky-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ScanLine size={18} color="var(--sky)" />
           </div>
           <div>
-            <h2 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Scanner un produit</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Saisissez ou scannez le code-barres</p>
+            <h2 style={{ fontSize: '0.95rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Scanner un code-barres</h2>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Ou parcourez le catalogue ci-dessous</p>
           </div>
         </div>
         <form className="scan-form" onSubmit={handleScan} style={{ display: 'flex', gap: '0.75rem' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <Barcode size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <Barcode size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input
               ref={inputRef}
               type="text"
               placeholder="Ex: 3017620422003"
-              style={{ paddingLeft: '2.4rem', fontSize: '1rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
+              style={{ paddingLeft: '2.4rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
               value={barcode}
               onChange={e => setBarcode(e.target.value)}
-              autoFocus
             />
           </div>
+          <Btn type="button" onClick={() => setCameraOpen(true)} variant="secondary" icon={ScanLine}>Caméra</Btn>
           <Btn type="submit" loading={scanning} icon={Plus}>Ajouter</Btn>
         </form>
+      </div>
 
-        {scanning && (
-          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--sky)', fontSize: '0.85rem' }}>
-            <ScanLine size={16} style={{ animation: 'pulse 1s ease-in-out infinite' }} />
-            Recherche du produit en cours…
+      {/* Catalogue */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-secondary)' }}>
+          Catalogue — {produits.length} article(s)
+        </h2>
+
+        {/* Search + categories */}
+        <div className="filter-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+            <Search size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input
+              placeholder="Rechercher un article…"
+              style={{ paddingLeft: '2.4rem', maxWidth: 280 }}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="cat-tabs" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {categories.map(c => (
+              <button key={c} onClick={() => setCat(c)}
+                style={{ padding: '0.45rem 1rem', borderRadius: '100px', border: `1px solid ${cat === c ? 'var(--sky)' : 'var(--border-strong)'}`, background: cat === c ? 'var(--sky-dim)' : 'transparent', color: cat === c ? 'var(--sky)' : 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: cat === c ? 600 : 400, cursor: 'pointer', transition: 'all var(--transition)', whiteSpace: 'nowrap' }}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Grid */}
+        {loadingProduits ? (
+          <div style={{ padding: '3rem', textAlign: 'center' }}><Spinner /></div>
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={ShoppingCart} title="Aucun article" desc="Aucun article ne correspond à votre recherche." />
+        ) : (
+          <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.25rem' }}>
+            {filtered.map((p, i) => {
+              const inCart = items.find(it => it.produitId === p._id);
+              return (
+                <div key={p._id}
+                  style={{ background: 'var(--surface-raised)', border: `1px solid ${inCart ? 'rgba(56,189,248,0.35)' : 'var(--border)'}`, borderRadius: 'var(--radius-lg)', overflow: 'hidden', transition: 'transform 0.2s ease, box-shadow 0.2s ease', boxShadow: inCart ? '0 0 20px rgba(56,189,248,0.12)' : '0 2px 8px rgba(0,0,0,0.2)', animation: `cardIn 0.4s ease ${i * 0.05}s both` }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = inCart ? '0 8px 28px rgba(56,189,248,0.18)' : '0 8px 24px rgba(0,0,0,0.35)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = inCart ? '0 0 20px rgba(56,189,248,0.12)' : '0 2px 8px rgba(0,0,0,0.2)'; }}
+                >
+                  <div className="product-card-img" style={{ height: 160, overflow: 'hidden', position: 'relative' }}>
+                    <img
+                      src={getProductImage(p, i)}
+                      alt={p.nom}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                      onError={e => { e.target.src = GROCERY_IMAGES[i % GROCERY_IMAGES.length]; }}
+                      onMouseEnter={e => { e.target.style.transform = 'scale(1.06)'; }}
+                      onMouseLeave={e => { e.target.style.transform = 'scale(1)'; }}
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,15,30,0.7) 0%, transparent 55%)' }} />
+                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
+                      <Badge variant="default">{p.categorie}</Badge>
+                    </div>
+                    {p.codeBarre && (
+                      <div style={{ position: 'absolute', bottom: '0.6rem', left: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Barcode size={11} color="rgba(255,255,255,0.6)" />
+                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)' }}>{p.codeBarre}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: '1rem' }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.3rem' }}>{p.nom}</h3>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--sky)', fontFamily: 'var(--font-mono)', marginBottom: '0.875rem' }}>
+                      {p.prix.toLocaleString()} GNF
+                    </div>
+                    {inCart ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => updateQty(p._id, inCart.quantite - 1)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}><Minus size={13} /></button>
+                        <span style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{inCart.quantite}</span>
+                        <button onClick={() => updateQty(p._id, inCart.quantite + 1)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--sky)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E' }}><Plus size={13} /></button>
+                        <button onClick={() => removeItem(p._id)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--crimson-dim)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--crimson)' }}><Trash2 size={12} /></button>
+                      </div>
+                    ) : (
+                      <Btn onClick={() => { addItem(p); show(`${p.nom} ajouté au panier`, 'success'); }} variant="outline" size="sm" icon={Plus} style={{ width: '100%' }}>
+                        Ajouter
+                      </Btn>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Cart */}
-      {items.length === 0 ? (
-        <EmptyState icon={ShoppingBag} title="Panier vide" desc="Scannez un code-barres pour ajouter des articles à votre panier." />
-      ) : (
-        <div>
+      {items.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-            Articles ({count})
+            Panier ({count})
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
             {items.map((item, i) => (
-              <div key={item.produitId} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1rem', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', transition: 'all var(--transition)', flexWrap: 'wrap' }}>
+              <div key={item.produitId} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1rem', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', flexWrap: 'wrap' }}>
                 <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--sky-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sky)', fontFamily: 'var(--font-mono)' }}>{String(i + 1).padStart(2, '0')}</span>
                 </div>
@@ -137,7 +260,6 @@ export default function SupermarchePage() {
             ))}
           </div>
 
-          {/* Total & CTA */}
           <div className="total-cta" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Total</div>
@@ -180,6 +302,14 @@ export default function SupermarchePage() {
         </div>
       </Modal>
 
+      {/* Camera barcode scanner */}
+      <CameraScanner
+        open={cameraOpen}
+        onScan={handleCameraScan}
+        onClose={() => setCameraOpen(false)}
+        mode="barcode"
+      />
+
       {/* QR Code receipt */}
       <Modal open={!!receipt} onClose={() => setReceipt(null)} title="Votre ticket de sortie" width={420}>
         {receipt && (
@@ -189,7 +319,6 @@ export default function SupermarchePage() {
               <div style={{ fontWeight: 700, color: 'var(--emerald)', fontSize: '1rem', marginBottom: '0.25rem' }}>Paiement validé !</div>
               <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>Présentez ce code au vigile pour sortir</div>
             </div>
-
             {receipt.qrCodeSortie && (
               <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
                 <QrCode size={64} color="var(--text-primary)" />
@@ -197,7 +326,6 @@ export default function SupermarchePage() {
                 <Badge variant="green">QR Code de sortie valide</Badge>
               </div>
             )}
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
                 { label: 'Référence', value: receipt.reference },

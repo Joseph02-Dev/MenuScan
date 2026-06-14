@@ -18,7 +18,10 @@ function PrivateRoute({ children, roles }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner size={36} /></div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (roles && !roles.includes(user.role)) {
+    const home = user.role === 'cuisine' ? '/cuisine' : user.role === 'admin' ? '/admin' : '/restaurant';
+    return <Navigate to={home} replace />;
+  }
   return <Layout>{children}</Layout>;
 }
 
@@ -27,6 +30,15 @@ function PublicRoute({ children }) {
   if (loading) return null;
   if (user) return <Navigate to={user.role === 'cuisine' ? '/cuisine' : user.role === 'admin' ? '/admin' : '/restaurant'} replace />;
   return children;
+}
+
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'cuisine') return <Navigate to="/cuisine" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  return <Navigate to="/restaurant" replace />;
 }
 
 function AppRoutes() {
@@ -40,7 +52,7 @@ function AppRoutes() {
       <Route path="/admin" element={<PrivateRoute roles={['admin']}><AdminDashboard /></PrivateRoute>} />
       <Route path="/admin/produits" element={<PrivateRoute roles={['admin']}><ProduitsPage /></PrivateRoute>} />
       <Route path="/admin/sortie" element={<PrivateRoute roles={['admin']}><SortiePage /></PrivateRoute>} />
-      <Route path="/" element={<Navigate to="/restaurant" replace />} />
+      <Route path="/" element={<RootRedirect />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

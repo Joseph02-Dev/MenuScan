@@ -9,7 +9,7 @@ const {
 } = require('../controllers/commandeController');
 
 router.route('/')
-  .post(creerCommande)
+  .post(proteger, creerCommande)
   .get(getCommandes);
 
 // Route pour la mise à jour par la cuisine

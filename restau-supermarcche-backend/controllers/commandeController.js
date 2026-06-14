@@ -28,6 +28,8 @@ const creerCommande = async (req, res) => {
       articlesFormates.push({
         produitId: produit._id,
         nom: produit.nom,
+        image: produit.image || null,
+        note: item.note || '',
         quantite: item.quantite,
         prixUnitaire: prixUnitaire
       });
@@ -35,6 +37,7 @@ const creerCommande = async (req, res) => {
 
     // Création de la commande finale
   const nouvelleCommande = await Commande.create({
+    utilisateurId: req.utilisateur?._id || null,
     typePlateforme,
     table,
     articles: articlesFormates,
@@ -57,57 +60,55 @@ const creerCommande = async (req, res) => {
 };
 
 
-// @desc    Mettre à jour le statut de la commande (Cuisine) avec double verrou de paiement
+// @desc    Mettre à jour le statut de préparation (Cuisine)
 // @route   PUT /api/commandes/:id
 const modifierStatutPreparation = async (req, res) => {
   try {
-    // 1. On récupère TOUT le body proprement
-    const { statutCommande } = req.body; // On attend 'PREPARATION', 'PRET' ou 'ANNULE'
+    const { statutPreparation } = req.body;
     const commandeId = req.params.id;
 
-    // Petite sécurité au cas où le body arrive totalement vide
-    if (!statutCommande) {
-      return res.status(400).json({ success: false, error: "Le champ 'statutCommande' est obligatoire dans la requête." });
+    if (!statutPreparation) {
+      return res.status(400).json({ success: false, error: "Le champ 'statutPreparation' est obligatoire." });
     }
 
-    // 2. Trouver la commande actuelle en base de données
     const commandeActuelle = await Commande.findById(commandeId);
-
     if (!commandeActuelle) {
       return res.status(404).json({ success: false, error: "Commande introuvable" });
     }
 
-    // 3. 🚨 LE VERROU STRICT : Si la cuisine veut commencer à préparer ('PREPARATION')
-    if (statutCommande === 'PREPARATION') {
-      
-      // Vérification A : Est-ce que le statut actuel en BDD est déjà marqué PAYE ?
+    // Verrou paiement : la cuisine ne peut passer en Préparation que si le client a payé
+    if (statutPreparation === 'Préparation') {
       const estMarquePaye = commandeActuelle.statutCommande === 'PAYE';
-
-      // Vérification B : Recherche d'une transaction Mobile Money réussie en BDD pour cette commande
       const transactionValide = await Transaction.findOne({
         commandeId: commandeId,
         statutPaiement: 'SUCCESS'
       });
 
-      // Si le client n'a pas payé et qu'aucune transaction n'est valide, on bloque !
       if (!estMarquePaye && !transactionValide) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "🔒 Action refusée : Impossible d'envoyer en préparation. Cette commande n'a pas été payée par le client !" 
+        return res.status(400).json({
+          success: false,
+          error: "🔒 Action refusée : cette commande n'a pas encore été payée par le client !"
         });
       }
     }
 
-    // 4. Tout est OK, on applique le nouveau statut (PREPARATION, PRET, etc.)
-    commandeActuelle.statutCommande = statutCommande;
+    commandeActuelle.statutPreparation = statutPreparation;
     await commandeActuelle.save();
 
-    // Émettre le signal Socket.io en temps réel
     if (req.io) {
-      req.io.emit('statut_commande_change', { 
-        id: commandeActuelle._id, 
-        statutCommande: commandeActuelle.statutCommande 
+      req.io.emit('statut_commande_change', {
+        id: commandeActuelle._id,
+        statutPreparation: commandeActuelle.statutPreparation
       });
+
+      // Notifier le client quand sa commande est prête
+      if (statutPreparation === 'Prêt' && commandeActuelle.utilisateurId) {
+        req.io.to(`client_${commandeActuelle.utilisateurId}`).emit('commande_prete', {
+          commandeId: commandeActuelle._id,
+          table: commandeActuelle.table,
+          message: 'Votre commande est prête !'
+        });
+      }
     }
 
     res.status(200).json({ success: true, data: commandeActuelle });

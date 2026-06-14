@@ -65,6 +65,7 @@ const connexion = async (req, res) => {
     res.status(200).json({
       success: true,
       token,
+      id: utilisateur._id,
       role: utilisateur.role,
       nom: utilisateur.nom
     });

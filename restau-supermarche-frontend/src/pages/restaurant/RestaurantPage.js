@@ -11,7 +11,7 @@ const CATEGORY_EMOJIS = {
   'Entrées': '🥗', 'Plats principaux': '🍛', 'Desserts': '🍮', 'Boissons': '🥤', 'Tous': '🍽️',
 };
 
-const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
+const API_BASE = (process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000/api`).replace('/api', '');
 
 const FOOD_IMAGES = [
   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80',
@@ -37,7 +37,7 @@ export default function RestaurantPage() {
   const [tableInput, setTableInput] = useState('');
   const [tableSet, setTableSet] = useState(false);
 
-  const { items, addItem, removeItem, updateQty, clearCart, total, count, table, setTable, setPlateforme } = useCart();
+  const { items, addItem, removeItem, updateQty, updateNote, clearCart, total, count, table, setTable, setPlateforme } = useCart();
   const { show } = useToast();
 
   useEffect(() => { setPlateforme('restaurant'); }, [setPlateforme]);
@@ -66,7 +66,7 @@ export default function RestaurantPage() {
     try {
       const orderRes = await commandesAPI.create({
         typePlateforme: 'restaurant', table,
-        items: items.map(i => ({ produitId: i.produitId, quantite: i.quantite })),
+        items: items.map(i => ({ produitId: i.produitId, quantite: i.quantite, note: i.note || '' })),
         modePaiement: 'Mobile Money',
       });
       const payRes = await paiementsAPI.initier({
@@ -186,20 +186,33 @@ export default function RestaurantPage() {
           <EmptyState icon={ShoppingCart} title="Panier vide" desc="Ajoutez des plats depuis le menu." />
         ) : (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: 340, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: 420, overflowY: 'auto' }}>
               {items.map(item => (
-                <div key={item.produitId} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{item.nom}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{item.prixUnitaire.toLocaleString()} GNF</div>
+                <div key={item.produitId} style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                  {/* Ligne article */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.nom}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{item.prixUnitaire.toLocaleString()} GNF</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                      <button onClick={() => updateQty(item.produitId, item.quantite - 1)} style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--surface-raised)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}><Minus size={11} /></button>
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', minWidth: 20, textAlign: 'center' }}>{item.quantite}</span>
+                      <button onClick={() => updateQty(item.produitId, item.quantite + 1)} style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--gold)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E' }}><Plus size={11} /></button>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--gold)', minWidth: 80, textAlign: 'right', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{(item.prixUnitaire * item.quantite).toLocaleString()} GNF</div>
+                    <button onClick={() => removeItem(item.produitId)} style={{ color: 'var(--crimson)', lineHeight: 0, flexShrink: 0 }}><X size={15} /></button>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <button onClick={() => updateQty(item.produitId, item.quantite - 1)} style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--surface-raised)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}><Minus size={11} /></button>
-                    <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', minWidth: 20, textAlign: 'center' }}>{item.quantite}</span>
-                    <button onClick={() => updateQty(item.produitId, item.quantite + 1)} style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--gold)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0F1E' }}><Plus size={11} /></button>
+                  {/* Champ note */}
+                  <div style={{ padding: '0 0.75rem 0.75rem' }}>
+                    <textarea
+                      placeholder="✏️ Instruction pour le cuisinier (optionnel) — ex: sans piment, bien cuit…"
+                      value={item.note || ''}
+                      onChange={e => updateNote(item.produitId, e.target.value)}
+                      rows={2}
+                      style={{ width: '100%', resize: 'none', padding: '0.5rem 0.65rem', background: 'var(--gold-dim)', border: '1px dashed rgba(245,166,35,0.5)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '0.78rem', fontFamily: 'var(--font-body)', lineHeight: 1.55, outline: 'none', boxSizing: 'border-box' }}
+                    />
                   </div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--gold)', minWidth: 90, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{(item.prixUnitaire * item.quantite).toLocaleString()} GNF</div>
-                  <button onClick={() => removeItem(item.produitId)} style={{ color: 'var(--crimson)', lineHeight: 0 }}><X size={15} /></button>
                 </div>
               ))}
             </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   UtensilsCrossed, ShoppingCart, LayoutDashboard, Package,
@@ -36,12 +37,29 @@ export default function Layout({ children }) {
   const { count } = useCart();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [orderNotif, setOrderNotif] = useState(null);
+  const notifTimer = useRef(null);
+
+  // Socket de notification commande prête — uniquement pour les clients
+  useEffect(() => {
+    if (!user?.id || user.role !== 'client') return;
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || `http://${window.location.hostname}:5000`;
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.on('connect', () => socket.emit('rejoindre_chambre', `client_${user.id}`));
+    socket.on('commande_prete', ({ table, message }) => {
+      setOrderNotif({ table, message });
+      if (notifTimer.current) clearTimeout(notifTimer.current);
+      notifTimer.current = setTimeout(() => setOrderNotif(null), 12000);
+    });
+    return () => { socket.disconnect(); if (notifTimer.current) clearTimeout(notifTimer.current); };
+  }, [user?.id, user?.role]);
 
   const items = NAV[user?.role] || NAV.client;
   const meta = ROLE_META[user?.role] || ROLE_META.client;
   const RoleIcon = meta.icon;
 
   const handleLogout = () => { logout(); navigate('/login'); };
+
 
   const SidebarContent = () => (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -102,6 +120,34 @@ export default function Layout({ children }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
+
+      {/* Bannière notification commande prête */}
+      {orderNotif && (
+        <div className="order-notif-banner" style={{
+          position: 'fixed', left: 0, right: 0, zIndex: 9998,
+          background: 'linear-gradient(135deg, var(--emerald) 0%, #059669 100%)',
+          color: '#0A0F1E', padding: '0.875rem 1.5rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
+          boxShadow: '0 4px 24px rgba(16,185,129,0.45)',
+          animation: 'slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontSize: '2rem', flexShrink: 0 }}>🍽️</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1rem', fontFamily: 'var(--font-display)' }}>
+                {orderNotif.message}
+              </div>
+              <div style={{ fontSize: '0.82rem', opacity: 0.8, marginTop: '0.15rem' }}>
+                {orderNotif.table && `${orderNotif.table} — `}Merci pour votre patience, bon appétit !
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => { setOrderNotif(null); if (notifTimer.current) clearTimeout(notifTimer.current); }}
+            style={{ color: '#0A0F1E', opacity: 0.6, background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', flexShrink: 0, lineHeight: 1 }}
+          >✕</button>
+        </div>
+      )}
       {/* Desktop sidebar */}
       <aside style={{ width: 232, background: 'var(--surface)', borderRight: '1px solid var(--border)', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 }} className="desktop-sidebar">
         <SidebarContent />
@@ -135,10 +181,16 @@ export default function Layout({ children }) {
       </main>
 
       <style>{`
+        .order-notif-banner { top: 0; }
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-topbar { display: flex !important; }
           .main-content { margin-left: 0 !important; padding-top: 64px; }
+          .order-notif-banner { top: 64px !important; }
         }
         @media (max-width: 480px) {
           .mobile-topbar { padding: 0.75rem 1rem !important; }

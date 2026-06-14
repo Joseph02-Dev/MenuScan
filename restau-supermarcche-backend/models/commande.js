@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const CommandeSchema = new mongoose.Schema({
+  utilisateurId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Utilisateur',
+    default: null
+  },
   typePlateforme: {
     type: String,
     required: true,
@@ -20,6 +25,8 @@ const CommandeSchema = new mongoose.Schema({
         required: true
       },
       nom: String,
+      image: { type: String, default: null },
+      note: { type: String, default: '' },
       quantite: {
         type: Number,
         required: true,
@@ -40,6 +47,11 @@ const CommandeSchema = new mongoose.Schema({
     required: true,
     enum: ['EN_ATTENTE', 'PREPARATION', 'PRET', 'PAYE', 'ANNULE'],
     default: 'EN_ATTENTE'
+  },
+  statutPreparation: {
+    type: String,
+    enum: ['En attente', 'Préparation', 'Prêt', 'Archive'],
+    default: 'En attente'
   },
   modePaiement: {
     type: String,

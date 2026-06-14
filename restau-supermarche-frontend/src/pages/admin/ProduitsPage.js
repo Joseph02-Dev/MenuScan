@@ -4,7 +4,7 @@ import { produitsAPI } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { Btn, Badge, Spinner, EmptyState, Modal, PageHeader } from '../../components/ui';
 
-const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
+const API_BASE = (process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000/api`).replace('/api', '');
 
 const defaultForm = { nom: '', prix: '', categorie: '', typePlateforme: 'restaurant', codeBarre: '', estDisponible: true };
 
@@ -111,13 +111,17 @@ export default function ProduitsPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      // Ne pas envoyer codeBarre vide — l'index sparse n'ignore que null/undefined, pas ""
+      const formClean = { ...form, prix: parseFloat(form.prix) };
+      if (!formClean.codeBarre) delete formClean.codeBarre;
+
       let payload;
       if (imageFile) {
         payload = new FormData();
-        Object.entries({ ...form, prix: parseFloat(form.prix) }).forEach(([k, v]) => payload.append(k, v));
+        Object.entries(formClean).forEach(([k, v]) => payload.append(k, v));
         payload.append('image', imageFile);
       } else {
-        payload = { ...form, prix: parseFloat(form.prix) };
+        payload = formClean;
       }
       await produitsAPI.add(payload);
       show('Produit ajouté avec succès !', 'success');

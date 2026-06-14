@@ -1,5 +1,5 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Loader2, X, ScanLine, Camera } from 'lucide-react';
 
 /* ── Button ── */
 export const Btn = ({ children, variant = 'primary', size = 'md', loading, icon: Icon, style: extraStyle = {}, ...props }) => {
@@ -181,3 +181,118 @@ export const PageHeader = ({ title, subtitle, action }) => (
     {action && <div>{action}</div>}
   </div>
 );
+
+/* ── Camera Scanner ──
+   Utilise l'input fichier natif (capture="environment") au lieu du stream WebRTC.
+   Fonctionne sur HTTP local sans HTTPS, sur Android et iOS. */
+export const CameraScanner = ({ open, onScan, onClose, mode = 'barcode' }) => {
+  const [status, setStatus] = useState('idle'); // idle | decoding | error
+  const [errorMsg, setErrorMsg] = useState('');
+  const fileInputRef = useRef(null);
+  const divId = useRef('csd-' + Math.random().toString(36).slice(2, 9)).current;
+
+  // Déclenche automatiquement l'ouverture de la caméra native dès que open devient true
+  useEffect(() => {
+    if (open) {
+      setStatus('idle');
+      setErrorMsg('');
+      setTimeout(() => fileInputRef.current?.click(), 60);
+    }
+  }, [open]);
+
+  const handleCapture = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) { onClose(); return; }
+
+    setStatus('decoding');
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode');
+      const qr = new Html5Qrcode(divId, { verbose: false });
+      const decoded = await qr.scanFile(file, false);
+      qr.clear();
+      onScan(decoded);
+      onClose();
+    } catch {
+      setStatus('error');
+      setErrorMsg('Code non reconnu. Rapprochez-vous, assurez une bonne lumière et réessayez.');
+    }
+    e.target.value = '';
+  };
+
+  return (
+    <>
+      {/* Div caché requis par html5-qrcode pour le décodage fichier */}
+      <div id={divId} style={{ display: 'none' }} />
+
+      {/* Input fichier qui ouvre la caméra native du téléphone */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleCapture}
+      />
+
+      {/* Overlay affiché pendant le traitement */}
+      {open && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(10,15,30,0.97)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '2rem', animation: 'fadeUp 0.2s ease',
+        }}>
+          {status === 'idle' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--gold-dim)', border: '2px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                <Camera size={32} color="var(--gold)" />
+              </div>
+              <p style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem' }}>
+                {mode === 'qrcode' ? 'Ouverture de la caméra…' : 'Ouverture de la caméra…'}
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', marginBottom: '2rem' }}>
+                {mode === 'qrcode' ? 'Pointez vers le QR Code et prenez la photo' : 'Pointez vers le code-barres et prenez la photo'}
+              </p>
+              <button
+                onClick={onClose}
+                style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Annuler — saisir manuellement
+              </button>
+            </div>
+          )}
+
+          {status === 'decoding' && (
+            <div style={{ textAlign: 'center' }}>
+              <Loader2 size={44} color="var(--gold)" style={{ animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
+              <p style={{ color: '#F1F5F9', fontWeight: 600 }}>Décodage en cours…</p>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div style={{ textAlign: 'center', maxWidth: 320 }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
+              <p style={{ color: '#FCA5A5', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '1.75rem' }}>
+                {errorMsg}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <button
+                  onClick={() => { setStatus('idle'); setTimeout(() => fileInputRef.current?.click(), 60); }}
+                  style={{ padding: '0.9rem', background: 'var(--gold)', color: '#0A0F1E', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', border: 'none' }}
+                >
+                  Réessayer
+                </button>
+                <button
+                  onClick={() => { setStatus('idle'); onClose(); }}
+                  style={{ padding: '0.9rem', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.55)', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', cursor: 'pointer', border: 'none' }}
+                >
+                  Saisir manuellement
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
