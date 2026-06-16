@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MenuScan</string>
+    <string name="title_activity_main">MenuScan</string>
+    <string name="package_name">com.menuscan.app</string>
+    <string name="custom_url_scheme">com.menuscan.app</string>
+</resources>

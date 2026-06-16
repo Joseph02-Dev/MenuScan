@@ -254,8 +254,7 @@ export default function CuisinePage() {
       <style>{`
         .cuisine-sticky-header { top: 0; }
         @media (max-width: 768px) {
-          .cuisine-sticky-header { top: 64px !important; }
-          .cuisine-sticky-header { padding: 0.875rem 1rem 0 !important; }
+          .cuisine-sticky-header { top: 56px !important; padding: 0.875rem 1rem 0 !important; }
         }
       `}</style>
     </div>

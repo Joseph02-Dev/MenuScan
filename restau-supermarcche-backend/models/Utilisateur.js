@@ -22,7 +22,7 @@ const UtilisateurSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['client', 'cuisine', 'admin'],
+    enum: ['client', 'cuisine', 'caissier', 'admin'],
     default: 'client'
   },
   createdAt: {
@@ -32,12 +32,10 @@ const UtilisateurSchema = new mongoose.Schema({
 });
 
 // Middleware Mongoose : Hacher le mot de passe automatiquement avant de sauvegarder l'utilisateur
-UtilisateurSchema.pre('save', async function(next) {
-  if (!this.isModified('motDePasse')) return next();
-  
+UtilisateurSchema.pre('save', async function() {
+  if (!this.isModified('motDePasse')) return;
   const salt = await bcrypt.genSalt(10);
   this.motDePasse = await bcrypt.hash(this.motDePasse, salt);
-  //next();
 });
 
 // Méthode pour vérifier si le mot de passe entré correspond à celui en BDD

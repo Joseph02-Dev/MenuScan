@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import RestaurantPage from './pages/restaurant/RestaurantPage';
 import SupermarchePage from './pages/supermarche/SupermarchePage';
 import CuisinePage from './pages/cuisine/CuisinePage';
+import CaissierPage from './pages/caissier/CaissierPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProduitsPage from './pages/admin/ProduitsPage';
 import SortiePage from './pages/admin/SortiePage';
@@ -28,7 +29,7 @@ function PrivateRoute({ children, roles }) {
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to={user.role === 'cuisine' ? '/cuisine' : user.role === 'admin' ? '/admin' : '/restaurant'} replace />;
+  if (user) return <Navigate to={user.role === 'cuisine' ? '/cuisine' : user.role === 'caissier' ? '/caissier' : user.role === 'admin' ? '/admin' : '/restaurant'} replace />;
   return children;
 }
 
@@ -37,6 +38,7 @@ function RootRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'cuisine') return <Navigate to="/cuisine" replace />;
+  if (user.role === 'caissier') return <Navigate to="/caissier" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
   return <Navigate to="/restaurant" replace />;
 }
@@ -49,6 +51,7 @@ function AppRoutes() {
       <Route path="/restaurant" element={<PrivateRoute roles={['client', 'admin']}><RestaurantPage /></PrivateRoute>} />
       <Route path="/supermarche" element={<PrivateRoute roles={['client', 'admin']}><SupermarchePage /></PrivateRoute>} />
       <Route path="/cuisine" element={<PrivateRoute roles={['cuisine', 'admin']}><CuisinePage /></PrivateRoute>} />
+      <Route path="/caissier" element={<PrivateRoute roles={['caissier', 'admin']}><CaissierPage /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute roles={['admin']}><AdminDashboard /></PrivateRoute>} />
       <Route path="/admin/produits" element={<PrivateRoute roles={['admin']}><ProduitsPage /></PrivateRoute>} />
       <Route path="/admin/sortie" element={<PrivateRoute roles={['admin']}><SortiePage /></PrivateRoute>} />

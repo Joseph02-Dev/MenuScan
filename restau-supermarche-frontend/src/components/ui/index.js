@@ -118,12 +118,12 @@ export const FormSelect = ({ label, children, ...props }) => (
 
 /* ── Stat Card ── */
 export const StatCard = ({ label, value, icon: Icon, color = 'var(--gold)', sub }) => (
-  <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem' }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
-      {Icon && <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={18} color={color} /></div>}
+  <div className="stat-card" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <span className="stat-card-label" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>{label}</span>
+      {Icon && <div className="stat-card-icon" style={{ width: 36, height: 36, flexShrink: 0, borderRadius: 'var(--radius-sm)', background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={18} color={color} /></div>}
     </div>
-    <div style={{ fontSize: '1.9rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
+    <div className="stat-card-value" style={{ fontSize: '1.9rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
     {sub && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>{sub}</div>}
   </div>
 );

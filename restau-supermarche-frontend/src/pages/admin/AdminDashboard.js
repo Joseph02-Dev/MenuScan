@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LayoutDashboard, ShoppingBag, CreditCard, TrendingUp, RefreshCw, UtensilsCrossed, ShoppingCart, Clock } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, CreditCard, TrendingUp, RefreshCw, UtensilsCrossed, ShoppingCart, Clock, ChevronRight } from 'lucide-react';
 import { commandesAPI } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { Spinner, Badge, PageHeader, StatCard } from '../../components/ui';
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
       />
 
       {/* Stats */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
         <StatCard label="Commandes totales" value={stats.total} icon={ShoppingBag} color="var(--sky)" />
         <StatCard label="Commandes payées" value={stats.paye} icon={CreditCard} color="var(--emerald)" sub={`${stats.total > 0 ? Math.round(stats.paye / stats.total * 100) : 0}% du total`} />
         <StatCard label="CA encaissé" value={`${stats.ca.toLocaleString()} GNF`} icon={TrendingUp} color="var(--gold)" />
@@ -67,47 +67,91 @@ export default function AdminDashboard() {
         {commandes.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Aucune commande pour l'instant.</div>
         ) : (
-          <div className="table-wrap" style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-              <thead>
-                <tr>
-                  {['ID', 'Plateforme', 'Table/Type', 'Articles', 'Montant', 'Statut', 'Date'].map(h => (
-                    <th key={h} style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {commandes.map((cmd, i) => {
-                  const meta = STATUT_CMD[cmd.statutCommande] || STATUT_CMD.EN_ATTENTE;
-                  return (
-                    <tr key={cmd._id} style={{ borderBottom: i < commandes.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background var(--transition)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '0.875rem 1.25rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cmd._id.slice(-8).toUpperCase()}</td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: cmd.typePlateforme === 'restaurant' ? 'var(--gold)' : 'var(--sky)' }}>
-                          {cmd.typePlateforme === 'restaurant' ? <UtensilsCrossed size={13} /> : <ShoppingCart size={13} />}
-                          <span style={{ fontSize: '0.8rem', fontWeight: 500, textTransform: 'capitalize' }}>{cmd.typePlateforme}</span>
+          <>
+            {/* ── Vue cartes (mobile) ── */}
+            <div className="mobile-only" style={{ padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {commandes.map((cmd) => {
+                const meta = STATUT_CMD[cmd.statutCommande] || STATUT_CMD.EN_ATTENTE;
+                const isResto = cmd.typePlateforme === 'restaurant';
+                return (
+                  <div key={cmd._id} style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', padding: '1rem', animation: 'fadeUp 0.3s ease' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                          {isResto ? <UtensilsCrossed size={13} color="var(--gold)" /> : <ShoppingCart size={13} color="var(--sky)" />}
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: isResto ? 'var(--gold)' : 'var(--sky)', textTransform: 'capitalize' }}>
+                            {cmd.typePlateforme}
+                          </span>
+                          {cmd.table && (
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>· {cmd.table}</span>
+                          )}
                         </div>
-                      </td>
-                      <td style={{ padding: '0.875rem 1.25rem', color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{cmd.table || '—'}</td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.2rem 0.6rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{cmd.articles?.length || 0}</span>
-                      </td>
-                      <td style={{ padding: '0.875rem 1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-primary)' }}>{cmd.montantTotal?.toLocaleString()} GNF</td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}><Badge variant={meta.badge}>{meta.label}</Badge></td>
-                      <td style={{ padding: '0.875rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <Clock size={11} />
-                          {new Date(cmd.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+                          #{cmd._id.slice(-8).toUpperCase()}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      <Badge variant={meta.badge}>{meta.label}</Badge>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <Clock size={11} />
+                        {new Date(cmd.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        <span style={{ marginLeft: '0.5rem', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 6, padding: '0.1rem 0.45rem', fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
+                          {cmd.articles?.length || 0} art.
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                        {cmd.montantTotal?.toLocaleString()} <span style={{ fontSize: '0.7em', color: 'var(--text-muted)' }}>GNF</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Vue tableau (desktop) ── */}
+            <div className="desktop-only table-wrap" style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                <thead>
+                  <tr>
+                    {['ID', 'Plateforme', 'Table/Type', 'Articles', 'Montant', 'Statut', 'Date'].map(h => (
+                      <th key={h} style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {commandes.map((cmd, i) => {
+                    const meta = STATUT_CMD[cmd.statutCommande] || STATUT_CMD.EN_ATTENTE;
+                    return (
+                      <tr key={cmd._id} style={{ borderBottom: i < commandes.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background var(--transition)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '0.875rem 1.25rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cmd._id.slice(-8).toUpperCase()}</td>
+                        <td style={{ padding: '0.875rem 1.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: cmd.typePlateforme === 'restaurant' ? 'var(--gold)' : 'var(--sky)' }}>
+                            {cmd.typePlateforme === 'restaurant' ? <UtensilsCrossed size={13} /> : <ShoppingCart size={13} />}
+                            <span style={{ fontSize: '0.8rem', fontWeight: 500, textTransform: 'capitalize' }}>{cmd.typePlateforme}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.875rem 1.25rem', color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{cmd.table || '—'}</td>
+                        <td style={{ padding: '0.875rem 1.25rem' }}>
+                          <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.2rem 0.6rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{cmd.articles?.length || 0}</span>
+                        </td>
+                        <td style={{ padding: '0.875rem 1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{cmd.montantTotal?.toLocaleString()} GNF</td>
+                        <td style={{ padding: '0.875rem 1.25rem' }}><Badge variant={meta.badge}>{meta.label}</Badge></td>
+                        <td style={{ padding: '0.875rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Clock size={11} />
+                            {new Date(cmd.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

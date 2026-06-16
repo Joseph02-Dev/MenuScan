@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { initierPaiement, validerSortie} = require('../controllers/paiementController');
-const { proteger, autoriserRoles } = require('../middleware/authMiddleware'); // Sécurisé : il faut être connecté pour payer
+const { initierPaiement, validerSortie, getSortiesEnAttente } = require('../controllers/paiementController');
+const { proteger, autoriserRoles } = require('../middleware/authMiddleware');
 
 router.post('/initier', proteger, initierPaiement);
-// Route pour le contrôle de sortie (Sécurisée : Admin uniquement pour le moment)
-router.post('/valider-sortie', proteger, autoriserRoles('admin'), validerSortie);
+router.post('/valider-sortie', proteger, autoriserRoles('admin', 'caissier'), validerSortie);
+router.get('/sorties-en-attente', proteger, autoriserRoles('admin', 'caissier'), getSortiesEnAttente);
 
 module.exports = router;

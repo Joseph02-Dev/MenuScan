@@ -143,13 +143,13 @@ export default function RestaurantPage() {
               Quel est votre numéro de table ?
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div className="flex-row-mobile" style={{ display: 'flex', gap: '0.75rem' }}>
             <input
               placeholder="Ex: Table 5"
               value={tableInput}
               onChange={e => setTableInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && tableInput) { setTable(tableInput); setTableSet(true); show(`Table "${tableInput}" sélectionnée`, 'success'); } }}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 0 }}
             />
             <Btn
               onClick={() => { if (tableInput) { setTable(tableInput); setTableSet(true); show(`Table "${tableInput}" sélectionnée`, 'success'); } }}
@@ -347,7 +347,7 @@ export default function RestaurantPage() {
           <EmptyState icon={ShoppingCart} title="Panier vide" desc="Ajoutez des plats depuis le menu." />
         ) : (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.5rem', maxHeight: '55vh', overflowY: 'auto', paddingRight: '2px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.5rem', maxHeight: '62vh', overflowY: 'auto', paddingRight: '4px' }}>
               {items.map(item => (
                 <div key={item.produitId} style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', overflow: 'hidden', animation: 'fadeUp 0.25s ease' }}>
                   {/* Ligne article */}
@@ -374,23 +374,43 @@ export default function RestaurantPage() {
                       </button>
                     </div>
                   </div>
-                  {/* Note cuisinier */}
+
+                  {/* ── Note cuisinier ── */}
                   <div style={{ padding: '0 0.875rem 0.875rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+                      ✏️ Note pour le cuisinier
+                    </label>
                     <textarea
-                      placeholder="✏️ Note pour le cuisinier — ex: sans piment, bien cuit, sans oignon…"
+                      placeholder="Ex : sans piment, bien cuit, sans oignon…"
                       value={item.note || ''}
                       onChange={e => updateNote(item.produitId, e.target.value)}
-                      rows={2}
+                      rows={3}
                       style={{
-                        width: '100%', resize: 'none', padding: '0.6rem 0.75rem',
-                        background: 'var(--gold-dim)', border: '1px dashed rgba(245,166,35,0.5)',
-                        borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)',
-                        fontSize: '0.83rem', fontFamily: 'var(--font-body)', lineHeight: 1.55,
-                        outline: 'none', boxSizing: 'border-box',
-                        transition: 'border-color 0.2s',
+                        width: '100%',
+                        resize: 'vertical',
+                        minHeight: 72,
+                        padding: '0.7rem 0.875rem',
+                        background: 'var(--surface-raised)',
+                        border: '1.5px solid rgba(245,166,35,0.4)',
+                        borderRadius: 'var(--radius-sm)',
+                        color: 'var(--text-primary)',
+                        fontSize: '1rem',
+                        fontFamily: 'var(--font-body)',
+                        lineHeight: 1.55,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
                       }}
-                      onFocus={e => { e.target.style.borderColor = 'var(--gold)'; e.target.style.borderStyle = 'solid'; }}
-                      onBlur={e => { e.target.style.borderColor = 'rgba(245,166,35,0.5)'; e.target.style.borderStyle = 'dashed'; }}
+                      onFocus={e => {
+                        e.target.style.borderColor = 'var(--gold)';
+                        e.target.style.boxShadow = '0 0 0 3px var(--gold-dim)';
+                        /* Scroll pour rendre le champ visible sous le clavier */
+                        setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = 'rgba(245,166,35,0.4)';
+                        e.target.style.boxShadow = 'none';
+                      }}
                     />
                   </div>
                 </div>

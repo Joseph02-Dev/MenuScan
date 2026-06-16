@@ -118,23 +118,6 @@ export default function LoginPage() {
             </Btn>
           </form>
 
-          {/* Demo creds */}
-          <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--surface-raised)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, textAlign: 'center' }}>Comptes de démonstration</p>
-            {[
-              { role: 'Admin', email: 'admin@menuscan.com', color: 'var(--emerald)' },
-              { role: 'Cuisine', email: 'cuisine@menuscan.com', color: 'var(--gold)' },
-              { role: 'Client', email: 'client@menuscan.com', color: 'var(--sky)' },
-            ].map(({ role, email, color }) => (
-              <div key={role} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.76rem', color, fontWeight: 700, flexShrink: 0 }}>{role}</span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span>
-              </div>
-            ))}
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem', textAlign: 'center' }}>
-              Mot de passe : <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>password123</span>
-            </p>
-          </div>
         </div>
       </div>
 

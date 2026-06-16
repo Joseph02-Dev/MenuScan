@@ -1,6 +1,7 @@
+const crypto = require('crypto');
 const Transaction = require('../models/Transaction');
 const Commande = require('../models/commande');
-const Produit = require('../models/produits'); // <-- 1. IMPORTATION DU MODÈLE PRODUIT
+const Produit = require('../models/produits');
 
 // @desc    Initier et simuler un paiement Mobile Money
 // @route   POST /api/paiements/initier
@@ -30,9 +31,9 @@ const initierPaiement = async (req, res) => {
     // 4. SIMULATION DE LA SÉCURITÉ OPÉRATEUR (Validation automatique)
     transaction.statutPaiement = 'SUCCESS';
     
-    // Si c'est du Scan & Go (Supermarché), on génère le token du QR Code de sortie
+    // Si c'est du Scan & Go (Supermarché), on génère un code court facile à scanner
     if (commande.typePlateforme === 'supermarche') {
-      transaction.qrCodeSortie = `VALID-OUT-${commande._id}-${referenceTransaction}`;
+      transaction.qrCodeSortie = `SO-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
     }
     
     await transaction.save();
@@ -59,6 +60,16 @@ const initierPaiement = async (req, res) => {
     // 6. Alerte temps réel via WebSockets si nécessaire
     if (commande.typePlateforme === 'restaurant') {
       req.io.to('cuisine').emit('commande_payee', { commandeId: commande._id, table: commande.table });
+    } else if (commande.typePlateforme === 'supermarche') {
+      req.io.to('caissier').emit('nouvelle_commande_caissier', {
+        _id: commande._id,
+        articles: commande.articles,
+        montantTotal: commande.montantTotal,
+        qrCodeSortie: transaction.qrCodeSortie,
+        reference: referenceTransaction,
+        clientNom: req.utilisateur?.nom || 'Client',
+        createdAt: new Date()
+      });
     }
 
     res.status(200).json({
@@ -139,4 +150,34 @@ const validerSortie = async (req, res) => {
   }
 };
 
-module.exports = { initierPaiement, validerSortie };
+// @desc    Récupérer les commandes supermarché payées en attente de validation de sortie
+// @route   GET /api/paiements/sorties-en-attente
+const getSortiesEnAttente = async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      qrCodeSortie: { $exists: true, $ne: null },
+      statutPaiement: 'SUCCESS'
+    })
+    .populate({ path: 'commandeId', match: { estSortie: false, typePlateforme: 'supermarche' } })
+    .populate('utilisateurId', 'nom')
+    .sort({ createdAt: -1 });
+
+    const pending = transactions
+      .filter(t => t.commandeId !== null)
+      .map(t => ({
+        _id: t.commandeId._id,
+        articles: t.commandeId.articles,
+        montantTotal: t.commandeId.montantTotal,
+        qrCodeSortie: t.qrCodeSortie,
+        reference: t.referenceTransaction,
+        clientNom: t.utilisateurId?.nom || 'Client',
+        createdAt: t.createdAt
+      }));
+
+    res.status(200).json({ success: true, data: pending });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports = { initierPaiement, validerSortie, getSortiesEnAttente };

@@ -54,6 +54,7 @@ export const commandesAPI = {
 export const paiementsAPI = {
   initier: (data) => API.post('/paiements/initier', data),
   validerSortie: (data) => API.post('/paiements/valider-sortie', data),
+  getSortiesEnAttente: () => API.get('/paiements/sorties-en-attente'),
 };
 
 export default API;

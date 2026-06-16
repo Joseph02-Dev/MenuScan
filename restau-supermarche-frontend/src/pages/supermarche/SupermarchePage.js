@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Barcode, Plus, Minus, Trash2, CreditCard, ShoppingBag, X, ScanLine, QrCode, Search, ShoppingCart, Camera } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { produitsAPI, commandesAPI, paiementsAPI } from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -335,10 +336,22 @@ export default function SupermarchePage() {
               <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>Présentez ce code au vigile pour sortir</div>
             </div>
             {receipt.qrCodeSortie && (
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                <QrCode size={64} color="var(--text-primary)" />
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-secondary)', wordBreak: 'break-all', textAlign: 'center' }}>{receipt.qrCodeSortie}</div>
+              <div style={{ background: '#ffffff', border: '3px solid var(--emerald)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ fontSize: '0.75rem', color: '#0A0F1E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.6 }}>
+                  Présentez ce QR Code au caissier
+                </div>
+                <QRCodeSVG
+                  value={receipt.qrCodeSortie}
+                  size={200}
+                  bgColor="#ffffff"
+                  fgColor="#0A0F1E"
+                  level="M"
+                  style={{ borderRadius: 8 }}
+                />
                 <Badge variant="green">QR Code de sortie valide</Badge>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#64748b', wordBreak: 'break-all', textAlign: 'center', maxWidth: 220 }}>
+                  {receipt.qrCodeSortie}
+                </div>
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

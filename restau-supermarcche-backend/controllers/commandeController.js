@@ -121,7 +121,9 @@ const modifierStatutPreparation = async (req, res) => {
 // @route   GET /api/commandes
 const getCommandes = async (req, res) => {
   try {
-    const commandes = await Commande.find({});
+    const filtre = {};
+    if (req.query.typePlateforme) filtre.typePlateforme = req.query.typePlateforme;
+    const commandes = await Commande.find(filtre);
     res.status(200).json({ success: true, data: commandes });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

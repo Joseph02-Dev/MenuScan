@@ -144,27 +144,34 @@ export default function ProduitsPage() {
       <PageHeader
         title="Gestion des Produits"
         subtitle={`${produits.length} produit(s) enregistré(s)`}
-        action={<Btn onClick={() => setModalOpen(true)} icon={Plus}>Ajouter un produit</Btn>}
       />
 
-      {/* Filters */}
-      <div className="filter-row" style={{ display: 'flex', gap: '0.875rem', marginBottom: '1.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+      {/* ── Barre actions : Ajouter à gauche | Recherche à droite ── */}
+      <div className="produits-action-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+        <Btn onClick={() => setModalOpen(true)} icon={Plus}>Ajouter un produit</Btn>
+        <div style={{ position: 'relative', width: 260 }}>
           <Search size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-          <input placeholder="Rechercher…" style={{ paddingLeft: '2.4rem', maxWidth: 280 }} value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            placeholder="Rechercher un produit…"
+            style={{ paddingLeft: '2.4rem', width: '100%' }}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
-          {[
-            { key: 'tous', label: 'Tous', icon: Package },
-            { key: 'restaurant', label: 'Restaurant', icon: UtensilsCrossed },
-            { key: 'supermarche', label: 'Supermarché', icon: ShoppingCart },
-          ].map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setFilter(key)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', borderRadius: '100px', border: `1px solid ${filter === key ? 'var(--gold)' : 'var(--border-strong)'}`, background: filter === key ? 'var(--gold-dim)' : 'transparent', color: filter === key ? 'var(--gold)' : 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: filter === key ? 600 : 400, cursor: 'pointer', transition: 'all var(--transition)' }}>
-              <Icon size={13} />{label}
-            </button>
-          ))}
-        </div>
+      </div>
+
+      {/* ── Filtres plateforme ── */}
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+        {[
+          { key: 'tous', label: 'Tous', icon: Package },
+          { key: 'restaurant', label: 'Restaurant', icon: UtensilsCrossed },
+          { key: 'supermarche', label: 'Supermarché', icon: ShoppingCart },
+        ].map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setFilter(key)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', borderRadius: '100px', border: `1px solid ${filter === key ? 'var(--gold)' : 'var(--border-strong)'}`, background: filter === key ? 'var(--gold-dim)' : 'transparent', color: filter === key ? 'var(--gold)' : 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: filter === key ? 600 : 400, cursor: 'pointer', transition: 'all var(--transition)' }}>
+            <Icon size={13} />{label}
+          </button>
+        ))}
       </div>
 
       {/* Table */}
