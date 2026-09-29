@@ -12,7 +12,8 @@ const genererToken = (id) => {
 // @route   POST /api/auth/register
 const inscription = async (req, res) => {
   try {
-    const { nom, email, motDePasse, role } = req.body;
+    // Le rôle n'est jamais accepté depuis le client : les comptes staff sont créés par un admin (seed)
+    const { nom, email, motDePasse } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
     const utilisateurExiste = await Utilisateur.findOne({ email });
@@ -21,7 +22,7 @@ const inscription = async (req, res) => {
     }
 
     // Création de l'utilisateur
-    const utilisateur = await Utilisateur.create({ nom, email, motDePasse, role });
+    const utilisateur = await Utilisateur.create({ nom, email, motDePasse, role: 'client' });
 
     // Génération du token
     const token = genererToken(utilisateur._id);

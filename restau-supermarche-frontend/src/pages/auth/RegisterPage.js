@@ -6,7 +6,7 @@ import { authAPI } from '../../services/api';
 import { Btn } from '../../components/ui';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ nom: '', email: '', motDePasse: '', role: 'client' });
+  const [form, setForm] = useState({ nom: '', email: '', motDePasse: '' });
   const [loading, setLoading] = useState(false);
   const { show } = useToast();
   const navigate = useNavigate();
@@ -54,16 +54,6 @@ export default function RegisterPage() {
                 </div>
               </div>
             ))}
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', fontWeight: 500 }}>Rôle</label>
-              <select value={form.role} onChange={e => set('role', e.target.value)}>
-                <option value="client">Client</option>
-                <option value="cuisine">Cuisine</option>
-                <option value="caissier">Caissier / Vigile</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
 
             <Btn type="submit" loading={loading} size="lg" style={{ width: '100%' }}>
               {loading ? 'Création…' : 'Créer le compte'}

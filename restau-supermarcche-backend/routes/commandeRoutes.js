@@ -10,7 +10,7 @@ const {
 
 router.route('/')
   .post(proteger, creerCommande)
-  .get(getCommandes);
+  .get(proteger, autoriserRoles('cuisine', 'caissier', 'admin'), getCommandes);
 
 // Route pour la mise à jour par la cuisine
 router.route('/:id')

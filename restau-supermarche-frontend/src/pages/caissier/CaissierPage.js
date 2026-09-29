@@ -422,7 +422,7 @@ export default function CaissierPage() {
   useEffect(() => {
     loadCommandes();
     const socketUrl = process.env.REACT_APP_SOCKET_URL || `http://${window.location.hostname}:5000`;
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'], auth: { token: localStorage.getItem('ms_token') } });
     socket.on('connect', () => { setConnected(true); socket.emit('rejoindre_chambre', 'caissier'); });
     socket.on('disconnect', () => setConnected(false));
     socket.on('nouvelle_commande_caissier', (cmd) => {

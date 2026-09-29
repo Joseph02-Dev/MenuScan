@@ -305,18 +305,18 @@ PORT=5000
 
 ### Frontend
 
-Modifier directement `src/services/api.js` pour changer l'URL de l'API :
+Copier `.env.local.example` en `.env.local` (non versionné) et renseigner l'IP du serveur :
 
-```js
-// src/services/api.js
-const BASE_URL = 'http://<IP_SERVEUR>:5000/api';
+```env
+REACT_APP_API_URL=http://<IP_SERVEUR>:5000/api
+REACT_APP_SOCKET_URL=http://<IP_SERVEUR>:5000
 ```
 
 ---
 
 ## 7. Comptes de test
 
-Insérer ces documents dans la collection `utilisateurs` de MongoDB (le mot de passe sera hashé automatiquement si vous utilisez le endpoint `/api/auth/register`) :
+Créer ces comptes avec le script de seed (`node seed.js` dans le dossier backend). L'inscription publique crée uniquement des comptes `client` :
 
 | Rôle | Email | Mot de passe |
 |------|-------|-------------|
@@ -325,12 +325,12 @@ Insérer ces documents dans la collection `utilisateurs` de MongoDB (le mot de p
 | Caissier | `caissier@test.com` | `caissier123` |
 | Client | `client@test.com` | `client123` |
 
-**Créer via l'API :**
+**Créer un client via l'API :**
 
 ```bash
 curl -X POST http://10.65.237.42:5000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"nom":"Admin","email":"admin@test.com","motDePasse":"admin123","role":"admin"}'
+  -d '{"nom":"Client","email":"client2@test.com","motDePasse":"client123"}'
 ```
 
 ---
@@ -399,7 +399,7 @@ Authorization: Bearer <token_jwt>
 
 | Méthode | Route | Corps | Réponse | Auth |
 |---------|-------|-------|---------|------|
-| POST | `/register` | `{ nom, email, motDePasse, role? }` | `{ token, utilisateur }` | Non |
+| POST | `/register` | `{ nom, email, motDePasse }` (rôle forcé à `client`) | `{ token, utilisateur }` | Non |
 | POST | `/login` | `{ email, motDePasse }` | `{ token, utilisateur }` | Non |
 
 ---
@@ -418,7 +418,7 @@ Authorization: Bearer <token_jwt>
 
 | Méthode | Route | Corps | Réponse | Auth / Rôle |
 |---------|-------|-------|---------|-------------|
-| GET | `/` | — | `{ data: [Commande] }` | Tous |
+| GET | `/` | — | `{ data: [Commande] }` | cuisine, caissier, admin |
 | POST | `/` | `{ typePlateforme, table?, articles[], montantTotal, modePaiement? }` | `{ data: Commande }` | Tous |
 | PUT | `/:id` | `{ statutCommande?, statutPreparation? }` | `{ data: Commande }` | Cuisine / Admin |
 
@@ -451,7 +451,8 @@ Le serveur Socket.IO partage le même port que l'API REST.
 
 ```js
 import { io } from 'socket.io-client';
-const socket = io('http://10.65.237.42:5000');
+// Le JWT est obligatoire ; chaque room est réservée à son rôle (cuisine, caissier, client_<son id>)
+const socket = io('http://10.65.237.42:5000', { auth: { token } });
 
 // Rejoindre une room
 socket.emit('rejoindre_chambre', 'cuisine');

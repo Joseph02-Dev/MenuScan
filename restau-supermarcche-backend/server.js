@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http'); // 1. Importer le module HTTP natif
 const { Server } = require('socket.io'); // 2. Importer Socket.io
+const jwt = require('jsonwebtoken');
+const Utilisateur = require('./models/Utilisateur');
 const connectDB = require('./config/db.js');
 const produitRoutes = require('./routes/produitRoutes.js');
 const commandeRoutes = require('./routes/commandeRoutes.js');
@@ -47,12 +49,39 @@ app.get('/', (req, res) => {
   res.send("L'API et le serveur WebSocket de la plateforme fonctionnent.");
 });
 
+// Authentification WebSocket : le client doit fournir son JWT via `auth: { token }`
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('Accès refusé, aucun jeton fourni'));
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const utilisateur = await Utilisateur.findById(decoded.id);
+    if (!utilisateur) return next(new Error('Utilisateur introuvable'));
+    socket.data.utilisateur = utilisateur;
+    next();
+  } catch (error) {
+    next(new Error('Accès refusé, jeton invalide ou expiré'));
+  }
+});
+
+// Vérifie qu'un utilisateur a le droit de rejoindre une chambre
+const peutRejoindre = (utilisateur, chambre) => {
+  if (chambre === 'cuisine') return ['cuisine', 'admin'].includes(utilisateur.role);
+  if (chambre === 'caissier') return ['caissier', 'admin'].includes(utilisateur.role);
+  if (chambre === `client_${utilisateur._id}`) return true;
+  return false;
+};
+
 // Gestion des connexions WebSocket
 io.on('connection', (socket) => {
   console.log(`Un utilisateur s'est connecté via WebSocket : ${socket.id}`);
 
   // Permet à un écran (comme la cuisine) de rejoindre une "chambre" spécifique
   socket.on('rejoindre_chambre', (chambre) => {
+    if (typeof chambre !== 'string' || !peutRejoindre(socket.data.utilisateur, chambre)) {
+      console.warn(`Accès refusé à la chambre "${chambre}" pour ${socket.id}`);
+      return;
+    }
     socket.join(chambre);
     console.log(`L'appareil ${socket.id} a rejoint la chambre : ${chambre}`);
   });

@@ -17,6 +17,10 @@ const creerCommande = async (req, res) => {
 
     // Boucle sur les articles envoyés pour vérifier les prix réels en BDD (Sécurité)
     for (const item of items) {
+      if (!Number.isInteger(item.quantite) || item.quantite < 1) {
+        return res.status(400).json({ success: false, error: "La quantité doit être un entier supérieur ou égal à 1" });
+      }
+
       const produit = await Produit.findById(item.produitId);
       if (!produit) {
         return res.status(404).json({ success: false, error: `Produit introuvable avec l'ID : ${item.produitId}` });
