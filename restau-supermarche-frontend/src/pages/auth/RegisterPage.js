@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Zap } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { authAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { Btn } from '../../components/ui';
 
 export default function RegisterPage() {
@@ -10,15 +11,18 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const { show } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await authAPI.register(form);
-      show('Compte créé ! Connectez-vous.', 'success');
-      navigate('/login');
+      // Connexion automatique après l'inscription
+      const { data: res } = await authAPI.register(form);
+      login({ token: res.token, ...res.data });
+      show('Compte créé ! Bienvenue.', 'success');
+      navigate('/restaurant', { replace: true });
     } catch (err) {
       show(err.response?.data?.error || 'Erreur lors de l\'inscription', 'error');
     } finally { setLoading(false); }
