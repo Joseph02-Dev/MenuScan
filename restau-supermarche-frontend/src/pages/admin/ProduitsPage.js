@@ -24,7 +24,7 @@ function ImageUploadZone({ preview, onFile, onClear }) {
       </label>
       {preview ? (
         <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--gold)', animation: 'scaleIn 0.2s ease' }}>
-          <img src={preview} alt="Prévisualisation" style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />
+          <img src={preview} alt="Prévisualisation" style={{ width: '100%', height: 160, objectFit: 'contain', display: 'block', background: 'var(--surface)' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,15,30,0.6) 0%, transparent 60%)' }} />
           <button
             type="button"
