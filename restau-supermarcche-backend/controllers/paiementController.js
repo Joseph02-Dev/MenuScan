@@ -15,6 +15,17 @@ const initierPaiement = async (req, res) => {
       return res.status(404).json({ success: false, error: "Commande introuvable" });
     }
 
+    // Seul le client propriétaire (ou un admin) peut payer la commande
+    const estProprietaire = commande.utilisateurId && commande.utilisateurId.equals(req.utilisateur._id);
+    if (!estProprietaire && req.utilisateur.role !== 'admin') {
+      return res.status(403).json({ success: false, error: "Vous n'êtes pas autorisé à payer cette commande" });
+    }
+
+    // Empêche un double paiement (et donc une double décrémentation du stock)
+    if (commande.statutCommande === 'PAYE') {
+      return res.status(400).json({ success: false, error: "Cette commande a déjà été payée" });
+    }
+
     // 2. Générer une fausse référence opérateur (ex: TXN-171819...)
     const referenceTransaction = `TXN-${Math.floor(100000 + Math.random() * 900000)}-${Date.now().toString().slice(-4)}`;
 

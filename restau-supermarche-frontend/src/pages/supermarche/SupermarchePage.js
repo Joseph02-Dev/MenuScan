@@ -34,10 +34,9 @@ export default function SupermarchePage() {
   const [receipt, setReceipt] = useState(null);
   const inputRef = useRef(null);
 
-  const { items, addItem, removeItem, updateQty, clearCart, total, count, setPlateforme } = useCart();
+  const { items, addItem, removeItem, updateQty, clearCart, total, count } = useCart('supermarche');
   const { show } = useToast();
 
-  useEffect(() => { setPlateforme('supermarche'); }, [setPlateforme]);
 
   const loadProduits = useCallback(async () => {
     try {

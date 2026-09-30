@@ -53,7 +53,7 @@ const ROLE_META = {
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
-  const { count }        = useCart();
+  const { count }        = useCart('restaurant');
   const navigate         = useNavigate();
   const [orderNotif, setOrderNotif] = useState(null);
   const notifTimer = useRef(null);
@@ -62,7 +62,7 @@ export default function Layout({ children }) {
   useEffect(() => {
     if (!user?.id || user.role !== 'client') return;
     const url = process.env.REACT_APP_SOCKET_URL || `http://${window.location.hostname}:5000`;
-    const socket = io(url, { transports: ['websocket', 'polling'] });
+    const socket = io(url, { transports: ['websocket', 'polling'], auth: { token: localStorage.getItem('ms_token') } });
     socket.on('connect', () => socket.emit('rejoindre_chambre', `client_${user.id}`));
     socket.on('commande_prete', ({ table, message }) => {
       setOrderNotif({ table, message });
