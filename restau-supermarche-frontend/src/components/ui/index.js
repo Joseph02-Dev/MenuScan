@@ -157,13 +157,14 @@ export const Modal = ({ open, onClose, title, children, width = 480 }) => {
         style={{
           position: 'relative', zIndex: 1, background: 'var(--surface-raised)',
           border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xl)',
-          padding: '2rem', width: '100%', maxWidth: width,
+          padding: '1.5rem', width: '100%', maxWidth: width,
+          maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto',
           animation: 'scaleIn .25s ease', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{title}</h3>
             <button onClick={onClose} style={{ color: 'var(--text-muted)', padding: 4, lineHeight: 0, borderRadius: 'var(--radius-sm)', transition: 'all var(--transition)' }}>✕</button>
           </div>

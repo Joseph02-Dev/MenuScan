@@ -53,7 +53,7 @@ const ROLE_META = {
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
-  const { count }        = useCart();
+  const { count }        = useCart('restaurant');
   const navigate         = useNavigate();
   const [orderNotif, setOrderNotif] = useState(null);
   const notifTimer = useRef(null);

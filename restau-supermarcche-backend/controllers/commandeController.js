@@ -26,6 +26,11 @@ const creerCommande = async (req, res) => {
         return res.status(404).json({ success: false, error: `Produit introuvable avec l'ID : ${item.produitId}` });
       }
 
+      // Un produit du restaurant ne peut pas être commandé au supermarché, et inversement
+      if (produit.typePlateforme !== typePlateforme) {
+        return res.status(400).json({ success: false, error: `Le produit "${produit.nom}" n'appartient pas à la plateforme ${typePlateforme}` });
+      }
+
       const prixUnitaire = produit.prix;
       montantTotal += prixUnitaire * item.quantite;
 

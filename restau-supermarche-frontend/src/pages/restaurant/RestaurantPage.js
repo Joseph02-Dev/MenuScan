@@ -60,10 +60,9 @@ export default function RestaurantPage() {
   const [fabBounce, setFabBounce]   = useState(false);
   const prevCount                   = useRef(0);
 
-  const { items, addItem, removeItem, updateQty, updateNote, clearCart, total, count, table, setTable, setPlateforme } = useCart();
+  const { items, addItem, removeItem, updateQty, updateNote, clearCart, total, count, table, setTable } = useCart('restaurant');
   const { show } = useToast();
 
-  useEffect(() => { setPlateforme('restaurant'); }, [setPlateforme]);
 
   // Animate FAB badge when cart count changes
   useEffect(() => {

@@ -6,7 +6,7 @@ import { Btn, Badge, Spinner, EmptyState, Modal, PageHeader } from '../../compon
 
 const API_BASE = (process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000/api`).replace('/api', '');
 
-const defaultForm = { nom: '', prix: '', categorie: '', typePlateforme: 'restaurant', codeBarre: '', estDisponible: true };
+const defaultForm = { nom: '', prix: '', categorie: '', typePlateforme: 'restaurant', codeBarre: '', stock: '', estDisponible: true };
 
 function ImageUploadZone({ preview, onFile, onClear }) {
   const inputRef = useRef();
@@ -18,13 +18,13 @@ function ImageUploadZone({ preview, onFile, onClear }) {
   };
 
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', fontWeight: 500 }}>
+    <div style={{ marginBottom: '0.75rem' }}>
+      <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>
         Photo du produit
       </label>
       {preview ? (
         <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--gold)', animation: 'scaleIn 0.2s ease' }}>
-          <img src={preview} alt="Prévisualisation" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+          <img src={preview} alt="Prévisualisation" style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,15,30,0.6) 0%, transparent 60%)' }} />
           <button
             type="button"
@@ -46,11 +46,11 @@ function ImageUploadZone({ preview, onFile, onClear }) {
           onClick={() => inputRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
-          style={{ border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)', padding: '2rem 1rem', textAlign: 'center', cursor: 'pointer', transition: 'all var(--transition)', background: 'var(--surface)' }}
+          style={{ border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)', padding: '0.9rem 1rem', textAlign: 'center', cursor: 'pointer', transition: 'all var(--transition)', background: 'var(--surface)' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-dim)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.background = 'var(--surface)'; }}
         >
-          <Upload size={24} style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
+          <Upload size={18} style={{ color: 'var(--text-muted)', marginBottom: '0.25rem' }} />
           <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Glissez une image ou cliquez</div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>PNG, JPG, WEBP — max 5 Mo</div>
         </div>
@@ -112,7 +112,7 @@ export default function ProduitsPage() {
     setSaving(true);
     try {
       // Ne pas envoyer codeBarre vide — l'index sparse n'ignore que null/undefined, pas ""
-      const formClean = { ...form, prix: parseFloat(form.prix) };
+      const formClean = { ...form, prix: parseFloat(form.prix), stock: parseInt(form.stock, 10) };
       if (!formClean.codeBarre) delete formClean.codeBarre;
 
       let payload;
@@ -233,31 +233,34 @@ export default function ProduitsPage() {
       )}
 
       {/* Add product modal */}
-      <Modal open={modalOpen} onClose={resetModal} title="Ajouter un produit" width={520}>
+      <Modal open={modalOpen} onClose={resetModal} title="Ajouter un produit" width={560}>
         <form onSubmit={handleAdd}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             <ImageUploadZone preview={imagePreview} onFile={handleFile} onClear={clearImage} />
 
-            {[
-              { label: 'Nom du produit', key: 'nom', type: 'text', placeholder: 'Ex: Poulet Yassa', required: true },
-              { label: 'Prix (GNF)', key: 'prix', type: 'number', placeholder: 'Ex: 45000', required: true },
-              { label: 'Catégorie', key: 'categorie', type: 'text', placeholder: 'Ex: Plats principaux', required: true },
-            ].map(({ label, key, type, placeholder, required }) => (
-              <div key={key} style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', fontWeight: 500 }}>{label}</label>
-                <input type={type} placeholder={placeholder} value={form[key]} onChange={e => set(key, e.target.value)} required={required} />
-              </div>
-            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', columnGap: '0.75rem' }}>
+              {[
+                { label: 'Nom du produit', key: 'nom', type: 'text', placeholder: 'Ex: Poulet Yassa', required: true },
+                { label: 'Catégorie', key: 'categorie', type: 'text', placeholder: 'Ex: Plats principaux', required: true },
+                { label: 'Prix (GNF)', key: 'prix', type: 'number', placeholder: 'Ex: 45000', required: true, min: 0 },
+                { label: 'Stock', key: 'stock', type: 'number', placeholder: 'Ex: 20', required: true, min: 0 },
+              ].map(({ label, key, type, placeholder, required, min }) => (
+                <div key={key} style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>{label}</label>
+                  <input type={type} min={min} step={type === 'number' ? 1 : undefined} placeholder={placeholder} value={form[key]} onChange={e => set(key, e.target.value)} required={required} />
+                </div>
+              ))}
+            </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', fontWeight: 500 }}>Plateforme</label>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>Plateforme</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {[
                   { v: 'restaurant', label: '🍽️ Restaurant' },
                   { v: 'supermarche', label: '📦 Supermarché' },
                 ].map(({ v, label }) => (
-                  <button type="button" key={v} onClick={() => set('typePlateforme', v)}
-                    style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-md)', border: `1px solid ${form.typePlateforme === v ? 'var(--gold)' : 'var(--border-strong)'}`, background: form.typePlateforme === v ? 'var(--gold-dim)' : 'var(--surface)', color: form.typePlateforme === v ? 'var(--gold)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: form.typePlateforme === v ? 600 : 400, cursor: 'pointer', transition: 'all var(--transition)' }}>
+                  <button type="button" key={v} onClick={() => setForm(f => ({ ...f, typePlateforme: v, codeBarre: v === 'supermarche' ? f.codeBarre : '' }))}
+                    style={{ flex: 1, padding: '0.6rem', borderRadius: 'var(--radius-md)', border: `1px solid ${form.typePlateforme === v ? 'var(--gold)' : 'var(--border-strong)'}`, background: form.typePlateforme === v ? 'var(--gold-dim)' : 'var(--surface)', color: form.typePlateforme === v ? 'var(--gold)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: form.typePlateforme === v ? 600 : 400, cursor: 'pointer', transition: 'all var(--transition)' }}>
                     {label}
                   </button>
                 ))}
@@ -265,8 +268,8 @@ export default function ProduitsPage() {
             </div>
 
             {form.typePlateforme === 'supermarche' && (
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', fontWeight: 500 }}>Code-barres</label>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>Code-barres</label>
                 <div style={{ position: 'relative' }}>
                   <Barcode size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
                   <input type="text" placeholder="Ex: 3017620422003" style={{ paddingLeft: '2.4rem', fontFamily: 'var(--font-mono)' }} value={form.codeBarre} onChange={e => set('codeBarre', e.target.value)} />
